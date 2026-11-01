@@ -47,6 +47,7 @@ Columns used (`JOB_COLS`): Job No., Test Status, Work Week, Job Type, Group Name
 | `resCycleV1` | Cycle count results |
 | `resOwnerEmailV1` | Owner e-mail overrides |
 | `resZoneV1` | Zone rules per position (defaults: `DEFAULT_ZONES`) |
+| `resTrainV1` | Training record: every quiz attempt `{ at, name, empId, crew, trainer, score, total, passed, practical[], wrong[] }` |
 
 **Per PC only:** UI state such as the current tab, theme, editor name, first-run tour seen, 3D ambience, notification settings, last tester/type picked, poka-yoke toggle (`resTabV1`, `resThemeV1`, `resEditorV1`, `resTourV1`, `resAmbV1`, `resNotifyV1`, `resNotifiedV1`, `resLastTesterV1`, `resLastTypeV1`, `resPokaV1`, `lastNotifiedKeyV7`). Sync bookkeeping: `rsSyncBase`, `rsSyncPending`.
 

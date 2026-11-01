@@ -2,6 +2,11 @@
 
 Newest first. One line per release: date · who · what · why.
 
+## 2026-11-01 · Sirinya Mungjuntuek · training tab + hidden server
+- New **อบรม** tab: hands-on checklist (5 skills, ticked by the trainer) + quiz (10 of 14 questions, pass 8/10), record per person and per crew, CSV export, printable sign-off sheet. Stored in `resTrainV1` (shared, backed up).
+- `sw.js` cache bumped to v2.
+- `deploy/install-autostart`: the server now runs with no window under `run-server.vbs`, which restarts it within ~10 s if it stops (before, closing the console window stopped the server).
+
 ## 2026-11-01 · Sirinya Mungjuntuek · hand-over package
 - First hand-over to the Dev team: app files, developer documentation, hand-over checklist.
 - State of the app:

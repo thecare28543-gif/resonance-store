@@ -26,6 +26,7 @@
     <button type="button" role="tab" data-tab="insights" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Insights</span></button>
     <button type="button" role="tab" data-tab="jobs" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M8 8.5h8M8 12.5h8M8 16.5h5"/></svg><span>Jobs</span><span class="tab-count" id="tabJobs"></span></button>
     <button type="button" role="tab" data-tab="entry" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><span>Data Entry</span><span class="tab-dot" id="dirtyDot" hidden></span></button>
+    <button type="button" role="tab" data-tab="train" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9 12 4l10 5-10 5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/><path d="M22 9v6"/></svg><span>อบรม</span></button>
   </nav>
   <div class="side-foot">
     <button class="side-btn" id="guideBtn" type="button" title="คู่มือการใช้งาน / ทัวร์แนะนำ"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></svg><span>คู่มือ</span></button>
@@ -400,6 +401,42 @@
         <button class="btn soft sm" type="button" id="entryAddBtn">＋ เพิ่มแถว</button>
       </div>
       <div class="table-wrap tall"><table id="entryTable"></table></div>
+    </section>
+  </section>
+
+  <!-- ===================== TRAINING ===================== -->
+  <section class="view" id="view-train" hidden>
+    <section class="panel">
+      <div class="data-head">
+        <h3>ผลการอบรม · ทั้ง 3 กะ</h3>
+        <span class="data-tip">ผ่าน = แบบทดสอบ 8/10 ขึ้นไป และภาคปฏิบัติครบ · ข้อมูลเก็บบน server ทุกเครื่องเห็นตรงกัน</span>
+        <div class="tr-tools">
+          <select id="trCrewFilter" aria-label="กรองตามกะ"><option value="">ทุกกะ</option><option value="A">กะ A</option><option value="B">กะ B</option><option value="C">กะ C</option></select>
+          <button class="btn soft sm" type="button" id="trPrint">พิมพ์ใบบันทึกการอบรม</button>
+          <button class="btn soft sm" type="button" id="trExport">Export CSV</button>
+        </div>
+      </div>
+      <div class="tr-kpis" id="trKpis"></div>
+      <div class="table-wrap"><table id="trTable"></table></div>
+    </section>
+
+    <section class="panel">
+      <div class="data-head"><h3>อบรม + ทำแบบทดสอบ</h3><span class="data-tip">ผู้สอนกรอกและติ๊กภาคปฏิบัติ · ผู้อบรมทำแบบทดสอบ 10 ข้อ (สุ่มจากคลัง 14 ข้อ)</span></div>
+      <div class="tr-body add-form">
+        <div class="add-grid">
+          <label><span>ชื่อ - สกุล ผู้อบรม <em>*</em></span><input id="trName" maxlength="60" autocomplete="off" /></label>
+          <label><span>รหัสพนักงาน</span><input id="trEmp" maxlength="20" autocomplete="off" /></label>
+          <label><span>กะ <em>*</em></span><select id="trCrew"><option value="">เลือกกะ</option><option value="A">กะ A</option><option value="B">กะ B</option><option value="C">กะ C</option></select></label>
+          <label><span>ผู้สอน <em>*</em></span><input id="trTrainer" maxlength="60" autocomplete="off" /></label>
+        </div>
+        <div class="tr-practical">
+          <b>ภาคปฏิบัติ · ผู้สอนติ๊กเมื่อผู้อบรมทำได้จริงบนหน้าจอ</b>
+          <div id="trPractical"></div>
+        </div>
+        <div class="tr-actions"><button class="btn primary" type="button" id="trStart">เริ่มทำแบบทดสอบ</button></div>
+        <div id="trQuiz" hidden></div>
+        <div id="trResult" hidden></div>
+      </div>
     </section>
   </section>
 </main>

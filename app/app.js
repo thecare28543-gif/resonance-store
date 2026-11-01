@@ -3415,9 +3415,135 @@ function showTour(){
 }
 function endTour(){ if (tour.el) tour.el.hidden = true; try { localStorage.setItem('resTourV1', '1'); } catch {} }
 
+/* ===================== TRAINING (who has been trained, hands-on check + quiz, shared on the server) =====================
+   train = { attempts: [{ id, at, name, empId, crew, trainer, score, total, passed, practical:[bool], wrong:[qid] }] }
+   A person is keyed by employee ID (or by name when there is none); their best attempt decides the status. */
+const TRAIN_PASS = 0.8, TRAIN_QN = 10;
+const TRAIN_PRACTICAL = [
+  'รับงานเข้า: ใส่ข้อมูล → ✦ แนะนำช่อง → วางตามไฮไลต์ → กด ✓ วางแล้ว',
+  'หางาน: พิมพ์ Job No. ในช่องค้นหา 3D แล้วไปหยิบถูกช่อง',
+  'หยิบงานออกด้วย Pick List: ติ๊กทีละจุด แล้วกด นำออกที่ติ๊ก',
+  'ติด Hold (ชื่อ + เหตุผล) และรู้ว่าปลด Hold ต้องมีผู้อนุมัติ',
+  'รู้วิธีใช้ผังกระดาษเมื่อระบบใช้ไม่ได้',
+];
+const TRAIN_QUIZ = [
+  { id:'limit', q:'ตำแหน่งหนึ่ง (1 ช่อง) เก็บงานได้สูงสุดกี่ชิ้น?', c:['60 ชิ้น', '80 ชิ้น', '100 ชิ้น', 'ไม่จำกัด'], a:1, why:'สูงสุด 80 ชิ้นต่อช่อง ระบบเตือน (Warning) ตั้งแต่ 60 ชิ้น และไม่ให้บันทึกเกิน 80' },
+  { id:'editor', q:'ก่อนบันทึกข้อมูลทุกครั้ง ต้องทำอะไรก่อน?', c:['รีเฟรชหน้าเว็บ', 'ใส่ชื่อตัวเองในช่อง "ผู้บันทึก"', 'กด Export ไฟล์', 'ไม่ต้องทำอะไร'], a:1, why:'ชื่อในช่อง "ผู้บันทึก" ถูกบันทึกไว้กับทุกการแก้ไข (Last_Editor และ Audit Log) เพื่อตรวจย้อนหลังได้' },
+  { id:'smart', q:'ปุ่ม "✦ แนะนำช่อง (Smart)" ตอนรับงานเข้า ทำอะไร?', c:['เลือกช่องที่ว่างที่สุดเสมอ', 'เลือกช่องที่ถูกโซน Product/Type มีที่พอ และใกล้ Tester', 'สุ่มช่องให้', 'ลบงานเก่าออกให้มีที่ว่าง'], a:1, why:'Smart เลือกเฉพาะช่องที่โซนรับ Product/Type นั้น รับจำนวนได้ครบ และเดินจาก Tester ใกล้ที่สุด' },
+  { id:'zone', q:'ถ้าพยายามบันทึกงานลงช่องที่ผิดโซน ระบบจะทำอย่างไร?', c:['บันทึกให้ปกติ', 'บันทึกแต่ขึ้นสีเหลือง', 'ไม่บันทึก และบอกว่าโซนนั้นรับอะไร', 'ย้ายงานไปช่องอื่นเอง'], a:2, why:'ระบบไม่บันทึกงานที่ผิดโซน (Poka-yoke) ต้องเลือกช่องที่ถูกโซน หรือใช้ ✦ แนะนำช่อง' },
+  { id:'placed', q:'วางถาดลงช่องที่ไฮไลต์สีเขียวเสร็จแล้ว ต้องทำอะไรต่อ?', c:['ไม่ต้องทำอะไร', 'กด "✓ วางแล้ว" ให้ไฮไลต์ดับ', 'ปิดหน้าเว็บ', 'กด Export'], a:1, why:'กด ✓ วางแล้ว เพื่อยืนยันว่าวางจริง ไฮไลต์จะดับ คนถัดไปจะไม่สับสน' },
+  { id:'find', q:'วิธีที่เร็วที่สุดในการหางาน 1 งาน คือ?', c:['เดินดูทีละชั้น', 'ถามเพื่อนในกะ', 'พิมพ์ Job No. ในช่องค้นหา 3D ระบบชี้ช่องให้', 'เปิดไฟล์ Excel'], a:2, why:'พิมพ์ Job No. ระบบบินไปที่ช่องใน 3D บอก Rack · ชั้น · จำนวน ไม่ต้องเดินหา' },
+  { id:'hold', q:'งานที่ติด HOLD ทำอะไรในระบบไม่ได้บ้าง?', c:['Scrap ไม่ได้อย่างเดียว', 'หยิบออกไม่ได้อย่างเดียว', 'Scrap / หยิบออก / ลบ ไม่ได้ทั้งหมด', 'ทำได้ทุกอย่างแต่ขึ้นเตือน'], a:2, why:'งาน Hold ถูกบล็อกทั้ง Scrap หยิบออก และลบ ต้องปลด Hold ก่อน (มีผู้อนุมัติ)' },
+  { id:'holdset', q:'การติด Hold ให้งาน ต้องใส่ข้อมูลอะไร?', c:['ไม่ต้องใส่อะไร', 'ชื่อผู้ติด Hold + เหตุผล', 'เลข WI', 'รหัสผ่านหัวหน้า'], a:1, why:'ต้องมีชื่อและเหตุผลเสมอ ทุกครั้งถูกเก็บใน Audit Log' },
+  { id:'release', q:'การปลด Hold ต้องมีอะไร?', c:['ใครก็ปลดได้ทันที', 'ชื่อผู้อนุมัติ + เหตุผล', 'รอให้ครบ 14 วัน', 'Export ไฟล์ก่อน'], a:1, why:'ปลด Hold ต้องใส่ชื่อผู้อนุมัติและเหตุผล บันทึกไว้ตรวจย้อนหลังได้' },
+  { id:'pick', q:'Pick List ใช้ทำอะไร?', c:['พิมพ์ป้าย', 'หยิบงานออกหลายงาน เรียงตามเส้นทางเดินสั้นที่สุด ติ๊กทีละจุด', 'นับสต็อก', 'เปลี่ยนโซน'], a:1, why:'ใส่ Job ที่ต้องหยิบ ระบบไฮไลต์ทุกจุดและเรียงทางเดิน หยิบแล้วติ๊ก ครบแล้วกด นำออกที่ติ๊ก' },
+  { id:'offline', q:'ป้ายมุมบนขึ้นว่า "ออฟไลน์ · เก็บในเครื่องนี้" ควรทำอย่างไร?', c:['หยุดใช้งานทันที', 'ทำงานต่อได้ ข้อมูลจะส่งขึ้น server เองเมื่อกลับมา และแจ้งผู้ดูแล', 'ลบข้อมูลในเครื่อง', 'ปิดเครื่อง'], a:1, why:'ระหว่างออฟไลน์ เครื่องเก็บรายการไว้ และส่งขึ้นเองเมื่อ server กลับมา ถ้าเป็นนานให้แจ้งผู้ดูแลระบบ' },
+  { id:'paper', q:'ถ้าระบบใช้ไม่ได้นาน หรือคอมพิวเตอร์ดับ ให้ทำอย่างไร?', c:['รอจนระบบกลับมาค่อยวางงาน', 'ใช้ผังกระดาษที่พิมพ์ไว้ทุกกะ จดเข้า–ออก แล้วคีย์ย้อนหลัง', 'วางงานที่ไหนก็ได้', 'โทรหา IT แล้วรอ'], a:1, why:'ผังกระดาษพิมพ์ไว้ทุกกะเพื่อกรณีนี้ จดการเข้า–ออกไว้ แล้วคีย์เข้าระบบเมื่อกลับมา' },
+  { id:'age', q:'งานที่อยู่ใน Store นานเท่าไหร่ ระบบจะเตือนให้แจ้งเจ้าของงาน?', c:['3 วัน', '7 วัน', '14 วันขึ้นไป', '30 วัน'], a:2, why:'งานค้าง 14 วันขึ้นไปขึ้นในรายการแจ้งเจ้าของงาน (Owner) เพื่อคืนหรือตัดสินใจ' },
+  { id:'undo', q:'บันทึกผิดไปเมื่อสักครู่ แก้อย่างไรเร็วที่สุด?', c:['ลบทั้งแถวแล้วพิมพ์ใหม่', 'กด "↶ ย้อน" (Undo)', 'Import ไฟล์ใหม่ทั้งหมด', 'แจ้ง IT'], a:1, why:'ปุ่ม ↶ ย้อน ย้อนการบันทึกล่าสุดได้ทันที (และ ↷ ทำซ้ำ)' },
+];
+let train = readJSON('resTrainV1', { attempts: [] });
+let trainQuiz = null;   /* the quiz on screen: [{ ...question, order:[choice idx] }] */
+function saveTrain(){ try { localStorage.setItem('resTrainV1', JSON.stringify(train)); } catch {} }
+const trainKey = a => (String(a.empId || '').trim().toUpperCase()) || ('N:' + String(a.name || '').trim().toLowerCase().replace(/\s+/g, ' '));
+const fmtDT = t => { const d = new Date(t); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+/* one row per person: best attempt (passed first, then highest score), number of attempts, latest crew */
+function trainPeople(){
+  const by = {};
+  (train.attempts || []).forEach(a => { (by[trainKey(a)] ||= []).push(a); });
+  return Object.values(by).map(list => {
+    list.sort((x, y) => x.at - y.at);
+    const best = [...list].sort((x, y) => (y.passed - x.passed) || (y.score / y.total - x.score / x.total) || (y.at - x.at))[0];
+    const last = list[list.length - 1];
+    return { name: last.name, empId: last.empId || '', crew: last.crew, best, last, tries: list.length, passedAt: list.find(a => a.passed)?.at || null };
+  }).sort((a, b) => (a.crew || '').localeCompare(b.crew || '') || a.name.localeCompare(b.name, 'th'));
+}
+function renderTrain(){
+  const people = trainPeople(), crewF = $('trCrewFilter').value;
+  const crews = ['A', 'B', 'C'];
+  $('trKpis').innerHTML = crews.map(c => {
+    const ps = people.filter(p => p.crew === c), ok = ps.filter(p => p.best.passed).length;
+    return `<div class="tr-kpi"><span>กะ ${c}</span><b>${ok}</b><small>ผ่านแล้ว จาก ${ps.length} คนที่อบรม</small></div>`;
+  }).join('') + `<div class="tr-kpi all"><span>รวม 3 กะ</span><b>${people.filter(p => p.best.passed).length}</b><small>ผ่านแล้ว จาก ${people.length} คน</small></div>`;
+  const rows = people.filter(p => !crewF || p.crew === crewF);
+  $('trTable').innerHTML = `<thead><tr><th>ชื่อ</th><th>รหัสพนักงาน</th><th>กะ</th><th>ผล</th><th>คะแนนดีสุด</th><th>ภาคปฏิบัติ</th><th>วันที่ผ่าน</th><th>ผู้สอน</th><th>สอบ (ครั้ง)</th></tr></thead><tbody>${
+    rows.map(p => `<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.empId || '-')}</td><td>${esc(p.crew || '-')}</td>
+      <td><span class="badge ${p.best.passed ? 'normal' : 'over'}">${p.best.passed ? 'ผ่าน' : 'ยังไม่ผ่าน'}</span></td>
+      <td class="num">${p.best.score}/${p.best.total}</td><td class="num">${p.best.practical.filter(Boolean).length}/${TRAIN_PRACTICAL.length}</td>
+      <td>${p.passedAt ? fmtDT(p.passedAt) : '-'}</td><td>${esc(p.best.trainer || '-')}</td><td class="num">${p.tries}</td></tr>`).join('')
+    || `<tr><td colspan="9" class="hint-small" style="text-align:center;padding:18px">ยังไม่มีผลการอบรม${crewF ? ` ในกะ ${crewF}` : ''}</td></tr>`}</tbody>`;
+}
+function trainStart(){
+  const name = $('trName').value.trim(), crew = $('trCrew').value, trainer = $('trTrainer').value.trim();
+  if (!name || !crew || !trainer){ showToast('กรอกข้อมูลให้ครบ', 'ต้องมีชื่อผู้อบรม กะ และชื่อผู้สอน', 'warn'); return; }
+  const pool = [...TRAIN_QUIZ].sort(() => Math.random() - 0.5).slice(0, TRAIN_QN);
+  trainQuiz = pool.map(q => ({ ...q, order: q.c.map((_, i) => i).sort(() => Math.random() - 0.5) }));
+  $('trQuiz').innerHTML = trainQuiz.map((q, n) => `<fieldset class="tr-q" data-q="${n}"><legend><b>${n + 1}.</b> ${esc(q.q)}</legend>${
+    q.order.map(i => `<label class="tr-opt"><input type="radio" name="trq${n}" value="${i}"><span>${esc(q.c[i])}</span></label>`).join('')}</fieldset>`).join('')
+    + `<div class="tr-actions"><button class="btn primary" type="button" id="trSubmit">ส่งคำตอบ</button><span class="hint-small">ผ่านเมื่อได้ ${Math.ceil(TRAIN_QN * TRAIN_PASS)}/${TRAIN_QN} ขึ้นไป และทำภาคปฏิบัติครบ</span></div>`;
+  $('trResult').hidden = true; $('trQuiz').hidden = false;
+  $('trSubmit').addEventListener('click', trainSubmit);
+  $('trQuiz').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function trainSubmit(){
+  const picks = trainQuiz.map((q, n) => { const r = document.querySelector(`input[name="trq${n}"]:checked`); return r ? Number(r.value) : null; });
+  const missing = picks.findIndex(v => v === null);
+  if (missing >= 0){ showToast('ยังตอบไม่ครบ', `ข้อ ${missing + 1} ยังไม่ได้เลือกคำตอบ`, 'warn'); document.querySelector(`.tr-q[data-q="${missing}"]`).scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  const wrong = trainQuiz.filter((q, n) => picks[n] !== q.a);
+  const practical = [...document.querySelectorAll('#trPractical input')].map(i => i.checked);
+  const score = trainQuiz.length - wrong.length, total = trainQuiz.length;
+  const passed = score / total >= TRAIN_PASS && practical.every(Boolean);
+  const att = { id: newId(), at: Date.now(), name: $('trName').value.trim(), empId: $('trEmp').value.trim(), crew: $('trCrew').value, trainer: $('trTrainer').value.trim(),
+    score, total, passed, practical, wrong: wrong.map(q => q.id) };
+  train.attempts = [...(train.attempts || []), att];
+  saveTrain();
+  $('trQuiz').hidden = true; $('trResult').hidden = false;
+  $('trResult').innerHTML = `<div class="tr-score ${passed ? 'ok' : 'no'}"><b>${score}/${total}</b><span>${passed ? '✓ ผ่านการอบรม' : '✗ ยังไม่ผ่าน'}</span>
+      <small>${!practical.every(Boolean) ? 'ภาคปฏิบัติยังไม่ครบ · ' : ''}${score / total < TRAIN_PASS ? `ต้องได้ ${Math.ceil(total * TRAIN_PASS)} ข้อขึ้นไป · ` : ''}บันทึกผลแล้ว ${fmtDT(att.at)}</small></div>
+    ${wrong.length ? `<h4>ข้อที่ตอบผิด · ทบทวนก่อนสอบใหม่</h4>${wrong.map(q => `<div class="tr-why"><b>${esc(q.q)}</b><span>คำตอบที่ถูก: ${esc(q.c[q.a])}</span><small>${esc(q.why)}</small></div>`).join('')}` : ''}
+    <div class="tr-actions"><button class="btn soft" type="button" id="trAgain">${passed ? 'คนถัดไป' : 'สอบใหม่'}</button></div>`;
+  $('trAgain').addEventListener('click', () => { if (passed) { ['trName', 'trEmp'].forEach(id => { $(id).value = ''; }); document.querySelectorAll('#trPractical input').forEach(i => { i.checked = false; }); $('trResult').hidden = true; $('trName').focus(); } else trainStart(); });
+  showToast(passed ? 'ผ่านการอบรม' : 'บันทึกผลแล้ว', `${att.name} · ${score}/${total}`, passed ? 'success' : 'warn');
+  renderTrain();
+}
+function trainExport(){
+  const cols = ['ชื่อ', 'รหัสพนักงาน', 'กะ', 'ผล', 'คะแนน', 'ภาคปฏิบัติ', 'ผู้สอน', 'วันเวลา'];
+  const rows = [...(train.attempts || [])].sort((a, b) => a.at - b.at).map(a => ({ 'ชื่อ': a.name, 'รหัสพนักงาน': a.empId, 'กะ': a.crew, 'ผล': a.passed ? 'ผ่าน' : 'ไม่ผ่าน',
+    'คะแนน': `${a.score}/${a.total}`, 'ภาคปฏิบัติ': `${a.practical.filter(Boolean).length}/${TRAIN_PRACTICAL.length}`, 'ผู้สอน': a.trainer, 'วันเวลา': fmtDT(a.at) }));
+  downloadFile(`Resonance_Training_${stamp()}.csv`, toCSV(cols, rows));
+}
+/* printable training record with signature columns (for the training file / audit) */
+function trainPrint(){
+  const crewF = $('trCrewFilter').value, people = trainPeople().filter(p => !crewF || p.crew === crewF);
+  const w = window.open('', '_blank');
+  if (!w){ showToast('เปิดหน้าพิมพ์ไม่ได้', 'อนุญาต Pop-up ให้หน้านี้ก่อน', 'error'); return; }
+  w.document.write(`<!doctype html><meta charset="utf-8"><title>บันทึกการอบรม Resonance Store</title><style>
+    body{font-family:Tahoma,sans-serif;margin:24px;color:#111} h1{font-size:20px;margin:0} p{margin:4px 0 14px;color:#444;font-size:13px}
+    table{width:100%;border-collapse:collapse;font-size:12.5px} th,td{border:1px solid #999;padding:7px 6px;text-align:left} th{background:#eee} td.s{width:110px}
+    @media print{button{display:none}}</style>
+    <h1>บันทึกการอบรมการใช้งาน Resonance Store${crewF ? ` · กะ ${crewF}` : ' · ทั้ง 3 กะ'}</h1>
+    <p>HSA Resonance Lab · เกณฑ์ผ่าน: แบบทดสอบ ${Math.ceil(TRAIN_QN * TRAIN_PASS)}/${TRAIN_QN} ขึ้นไป และภาคปฏิบัติครบ ${TRAIN_PRACTICAL.length} ข้อ · พิมพ์เมื่อ ${fmtDT(Date.now())}</p>
+    <table><tr><th>#</th><th>ชื่อ - สกุล</th><th>รหัส</th><th>กะ</th><th>วันที่อบรม</th><th>คะแนน</th><th>ผล</th><th>ผู้สอน</th><th>ลายเซ็นผู้อบรม</th><th>ลายเซ็นผู้สอน</th></tr>
+    ${people.map((p, i) => `<tr><td>${i + 1}</td><td>${esc(p.name)}</td><td>${esc(p.empId)}</td><td>${esc(p.crew)}</td><td>${fmtDT(p.best.at)}</td><td>${p.best.score}/${p.best.total}</td><td>${p.best.passed ? 'ผ่าน' : 'ไม่ผ่าน'}</td><td>${esc(p.best.trainer)}</td><td class="s"></td><td class="s"></td></tr>`).join('')}
+    </table><p style="margin-top:28px">ผู้ตรวจสอบ ............................................ วันที่ ....................</p>
+    <button onclick="print()">พิมพ์</button>`);
+  w.document.close();
+}
+$('trPractical').innerHTML = TRAIN_PRACTICAL.map((t, i) => `<label class="tr-check"><input type="checkbox" data-p="${i}"><span>${esc(t)}</span></label>`).join('');
+$('trStart').addEventListener('click', trainStart);
+$('trCrewFilter').addEventListener('change', renderTrain);
+$('trExport').addEventListener('click', trainExport);
+$('trPrint').addEventListener('click', trainPrint);
+window.addEventListener('storage', e => {
+  /* sync.js signals remote changes with a storage event; reload the training record whenever it may have changed */
+  if (e.key && !/^(resTrainV1|resStoreV7)$/.test(e.key)) return;
+  train = readJSON('resTrainV1', { attempts: [] });
+  if (currentTab === 'train') renderTrain();
+});
+
 /* ===================== TABS ===================== */
 function setTab(t){
-  const TABS = ['overview','3d','insights','jobs','entry'];
+  const TABS = ['overview','3d','insights','jobs','entry','train'];
   if (!TABS.includes(t)) t = 'overview';
   if (kiosk.on && t !== '3d') exitKiosk();
   if (three.ready && three.walking() && t !== '3d' && t !== 'overview') three.walkStop();
@@ -3441,10 +3567,12 @@ const PAGE_TITLES = {
   insights: ['Insights', 'ส่งกะ · พยากรณ์ · Kaizen · Cycle Count · Audit Log'],
   jobs: ['Jobs', 'งานที่อยู่ใน Store และการ Dispose'],
   entry: ['Data Entry', 'แก้ไขข้อมูล Store โดยตรง'],
+  train: ['อบรม', 'ภาคปฏิบัติ + แบบทดสอบ · บันทึกว่าใครผ่านแล้ว ทั้ง 3 กะ'],
 };
 function refreshTables(){
   if (currentTab === 'jobs') renderJobsTable();
   if (currentTab === 'entry') renderEntryTable();
+  if (currentTab === 'train') renderTrain();
   renderInsights();
 }
 

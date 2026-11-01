@@ -11,7 +11,7 @@
   'use strict';
   /* data that must be the same on every PC; everything else (theme, tab, editor name…) stays per PC */
   const SHARED = ['resStoreV7', 'jobDetailV7', 'disposeDataV7', 'lastUpdatedV7', 'resLogV1', 'resLogSnapV1', 'resLogStartV1',
-    'resHoldV1', 'resHoldLogV1', 'resHoldAuditV1', 'resKaizenV1', 'resCycleV1', 'resOwnerEmailV1', 'resZoneV1'];
+    'resHoldV1', 'resHoldLogV1', 'resHoldAuditV1', 'resKaizenV1', 'resCycleV1', 'resOwnerEmailV1', 'resZoneV1', 'resTrainV1'];
   const API = 'api/', POLL_MS = 5000, RETRY_MS = 15000, BOOT_TIMEOUT = 3000;
   const ls = window.localStorage, rawSet = Storage.prototype.setItem, rawRemove = Storage.prototype.removeItem;
   const st = {

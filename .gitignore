@@ -10,3 +10,6 @@ data/
 # presentation material
 *.pptx
 *.mp4
+
+# training manual PDF: screenshots contain real lab job numbers; copy it in at deployment
+app/training-manual.pdf

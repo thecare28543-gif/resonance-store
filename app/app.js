@@ -3530,6 +3530,8 @@ function trainPrint(){
   w.document.close();
 }
 $('trPractical').innerHTML = TRAIN_PRACTICAL.map((t, i) => `<label class="tr-check"><input type="checkbox" data-p="${i}"><span>${esc(t)}</span></label>`).join('');
+/* the manual PDF loads only when someone opens it (1.5 MB) */
+$('trManual').addEventListener('toggle', () => { const f = $('trManualFrame'); if ($('trManual').open && !f.src) f.src = 'training-manual.pdf#view=FitH'; });
 $('trStart').addEventListener('click', trainStart);
 $('trCrewFilter').addEventListener('change', renderTrain);
 $('trExport').addEventListener('click', trainExport);

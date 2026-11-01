@@ -91,7 +91,7 @@ setInterval(() => {
 
 /* ---------- http helpers ---------- */
 const TYPES = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.json':'application/json',
-  '.png':'image/png', '.jpg':'image/jpeg', '.svg':'image/svg+xml', '.ico':'image/x-icon', '.csv':'text/csv; charset=utf-8', '.woff2':'font/woff2' };
+  '.png':'image/png', '.jpg':'image/jpeg', '.svg':'image/svg+xml', '.ico':'image/x-icon', '.csv':'text/csv; charset=utf-8', '.woff2':'font/woff2', '.pdf':'application/pdf' };
 function send(res, code, body, type){
   const data = typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body);
   res.writeHead(code, { 'Content-Type': type || 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });

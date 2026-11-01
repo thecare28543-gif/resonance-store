@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Resonance Store</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- libraries are kept in lib/ next to this file; the CDN is only a fallback -->
+  <script src="lib/xlsx.full.min.js"></script>
+  <script>window.XLSX || document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\/script>')</script>
+</head>
+<body>
+<div class="shell">
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar" aria-label="เมนูหลัก">
+  <div class="brand">
+    <div class="logo" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="brand-text"><h1>Resonance Store</h1><p>HSA Resonance Lab</p></div>
+  </div>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="มุมมอง" aria-orientation="vertical">
+    <button type="button" role="tab" data-tab="overview" class="on" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg><span>ภาพรวม</span></button>
+    <button type="button" role="tab" data-tab="3d" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z"/><path d="M12 12 20 7.5M12 12 4 7.5M12 12v9"/></svg><span>3D Store</span></button>
+    <button type="button" role="tab" data-tab="insights" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Insights</span></button>
+    <button type="button" role="tab" data-tab="jobs" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M8 8.5h8M8 12.5h8M8 16.5h5"/></svg><span>Jobs</span><span class="tab-count" id="tabJobs"></span></button>
+    <button type="button" role="tab" data-tab="entry" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><span>Data Entry</span><span class="tab-dot" id="dirtyDot" hidden></span></button>
+  </nav>
+  <div class="side-foot">
+    <button class="side-btn" id="guideBtn" type="button" title="คู่มือการใช้งาน / ทัวร์แนะนำ"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></svg><span>คู่มือ</span></button>
+    <button class="side-btn" id="themeBtn" type="button" title="สลับโหมดสว่าง / มืด"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>โหมดมืด</span></button>
+  </div>
+</aside>
+
+<div class="main-col">
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="page-title"><h2 id="pageTitle">ภาพรวม</h2><span id="pageSub">สถานะ Store ทั้งหมดในหน้าเดียว</span></div>
+    <div class="top-meta">
+      <div class="shift-chip" id="shiftChip" title="กะที่กำลังทำงาน"></div>
+      <div class="last-update"><span>อัปเดตล่าสุด</span><b id="lastUpdated">-</b></div>
+      <button class="cmdk-btn" id="cmdkBtn" type="button" title="ค้นหาคำสั่ง ตำแหน่ง Job (Ctrl+K)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>ค้นหาทุกอย่าง…</span><kbd>Ctrl K</kbd></button>
+      <button class="icon-btn" id="notifyBtn" type="button" title="แจ้งเตือนบนเดสก์ท็อป + เสียง" aria-label="เปิด/ปิดการแจ้งเตือน" aria-pressed="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="app">
+  <!-- quick actions: things people do every shift stay visible, rare file actions live in the ⋯ menu -->
+  <section class="toolbar">
+    <label class="editor-field" for="editorName">
+      <span>ผู้บันทึก</span>
+      <input id="editorName" placeholder="ชื่อของคุณ" maxlength="40" autocomplete="name" />
+    </label>
+    <div class="tool-group">
+      <button class="btn primary" type="button" id="quickAddBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>รับงานเข้า</button>
+      <button class="btn soft" type="button" id="pickBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z"/><path d="M8 12l3 3 5-6"/></svg>หยิบงานออก</button>
+      <div class="undo-group" role="group" aria-label="ย้อน / ทำซ้ำ">
+        <button class="btn ghost" type="button" id="undoBtn" title="ย้อนการเปลี่ยนแปลงล่าสุด (Ctrl+Z)" disabled>↶ ย้อน</button>
+        <button class="btn ghost" type="button" id="redoBtn" title="ทำซ้ำ (Ctrl+Y)" disabled>↷</button>
+      </div>
+      <button class="btn warn-btn" type="button" id="saveBtn" hidden>บันทึกการแก้ไข</button>
+      <details class="more" id="moreMenu">
+        <summary class="btn ghost" aria-label="เมนูเพิ่มเติม">⋯ เพิ่มเติม</summary>
+        <div class="more-pop" role="menu">
+          <span class="more-h">ไฟล์ข้อมูล</span>
+          <label class="more-item" for="storeFileInput" role="menuitem">⬇ Import Store CSV/XLSX</label>
+          <input id="storeFileInput" type="file" accept=".csv,.xlsx,.xls" />
+          <label class="more-item" for="jobFileInput" role="menuitem">⬇ Import Job Detail CSV/XLSX</label>
+          <input id="jobFileInput" type="file" accept=".csv,.xlsx,.xls" />
+          <button class="more-item" type="button" id="exportBtn" role="menuitem">⬆ Export Store CSV</button>
+          <span class="more-h">เครื่องมือ</span>
+          <button class="more-item" type="button" id="qrBtn" role="menuitem">▦ พิมพ์ป้าย QR</button>
+          <button class="more-item" type="button" id="zoneBtn" role="menuitem">🗂 ตั้งค่าโซน (Product / Type / HOLD)</button>
+          <button class="more-item" type="button" id="paperBtn" role="menuitem">🖨 พิมพ์ผังงานสำรอง (ใช้ตอนระบบล่ม)</button>
+          <button class="more-item" type="button" id="backupBtn" role="menuitem">🛡 Backup &amp; กู้คืนข้อมูล</button>
+          <button class="more-item" type="button" id="addRowBtn" role="menuitem">＋ เพิ่ม Store Row (แก้ตาราง)</button>
+          <span class="more-h">อันตราย</span>
+          <button class="more-item danger" type="button" id="resetBtn" role="menuitem">⟲ Reset Data ทั้งหมด</button>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <div class="banners">
+    <div class="limit-banner">
+      <div class="limit-gauge" aria-hidden="true"><b>80</b><span>MAX</span></div>
+      <div class="limit-copy">
+        <span class="limit-text">เก็บได้สูงสุด <b>80 ชิ้น</b> ต่อช่อง</span>
+        <span class="limit-sub">Warning ตั้งแต่ 60 · Over ตั้งแต่ 80 · งานค้างเกิน 14 วันแจ้งเตือน</span>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--empty)"></i>Empty</span>
+        <span><i style="background:var(--brand)"></i>Normal</span>
+        <span><i style="background:var(--warn)"></i>Warning</span>
+        <span><i style="background:var(--danger)"></i>Over</span>
+      </div>
+    </div>
+
+    <div id="teamAlertBanner" class="team-alert-banner" hidden>
+      <div class="team-alert-text">
+        <span class="pulse-dot" aria-hidden="true"></span>
+        <span id="teamAlertMessage"></span>
+      </div>
+      <div class="team-alert-actions">
+        <button class="btn danger" type="button" id="notifyTeamBtn">แจ้งเตือนทีม HSA Resonance</button>
+        <button class="btn ghost" type="button" id="copyAlertBtn">คัดลอกข้อความ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== OVERVIEW ===================== -->
+  <section class="view" id="view-overview">
+    <section class="kpis">
+      <article class="kpi"><span>Total Locations</span><b id="kLocation">0</b><small id="kLocationSub">Fixed: 24 positions</small></article>
+      <article class="kpi"><span>Rack A</span><b id="kIn">0</b><small>Total units in Rack A</small></article>
+      <article class="kpi"><span>Rack B</span><b id="kOut">0</b><small>Total units in Rack B</small></article>
+      <article class="kpi accent"><span>Total Qty</span><b id="kTotal">0</b><small id="kCapacity">of 1,920 capacity</small><div class="kpi-bar"><i id="kCapBar"></i></div></article>
+      <article class="kpi"><span>Jobs in Store</span><b id="kJobs">0</b><small>Unique Job No.</small></article>
+      <article class="kpi bad"><span>Over Limit</span><b id="kOver">0</b><small>&ge; 80 units / location</small></article>
+    </section>
+
+    <!-- ===================== ADD WORK (receive into store) ===================== -->
+    <section class="panel add-panel" id="addPanel">
+      <div class="data-head">
+        <h3>รับงานเข้า Store</h3>
+        <span class="data-tip">บันทึกทันที · ระบบเช็กไม่ให้เกิน 80 ชิ้นต่อช่อง · ผู้บันทึกใช้ชื่อจากช่อง "ผู้บันทึก" ด้านบน</span>
+      </div>
+      <form id="addForm" class="add-form" autocomplete="off" novalidate>
+        <div class="add-grid">
+          <label><span>Job No. <em>*</em></span><span class="with-btn"><input id="fJob" placeholder="เช่น J_1234 หรือสแกน" /><button type="button" class="scan-btn" data-scan="form" title="สแกน QR / บาร์โค้ด" aria-label="สแกน QR หรือบาร์โค้ด">⌗</button></span></label>
+          <label><span>Type <em>*</em></span><input id="fItem" list="typeList" placeholder="WKL / EVL / QUL / FA" /></label>
+          <datalist id="typeList"><option value="WKL"><option value="EVL"><option value="QUL"><option value="FA"><option value="WKL_FA"><option value="N/A"></datalist>
+          <label>Product<input id="fProduct" list="productList" placeholder="เช่น DORADO" /></label>
+          <datalist id="productList"></datalist>
+          <label>ชนิดถาด (3D)
+            <select id="fType">
+              <option value="IM">IM · 8 ชิ้น/ถาด</option>
+              <option value="FOF">FOF · 32 ชิ้น/ถาด</option>
+              <option value="">อื่นๆ / ไม่ระบุ</option>
+            </select>
+          </label>
+          <label><span>จำนวน (ชิ้น) <em>*</em></span><input id="fQty" type="number" min="1" step="1" inputmode="numeric" /></label>
+          <label>Remark<input id="fRemark" /></label>
+        </div>
+        <div class="add-loc">
+          <label class="mini-field">มาจาก Tester<select id="fTester"></select></label>
+          <span class="add-sub">ตำแหน่ง</span>
+          <label class="mini-field">Rack<select id="fRack"></select></label>
+          <label class="mini-field">Side<select id="fSide"></select></label>
+          <label class="mini-field">ชั้น<select id="fFloor"></select></label>
+          <label class="mini-field">Cell<select id="fCell"></select></label>
+          <button type="button" class="btn soft sm" id="fFindBtn">✦ แนะนำช่อง (Smart)</button>
+          <div id="fCap" class="cap-note"></div>
+        </div>
+        <div id="fSuggest" class="suggest" hidden></div>
+        <div class="add-hold">
+          <label class="switch" title="งาน Hold: ระบบจะไม่ยอมให้ Scrap / หยิบออก / ลบ จนกว่าจะปลด Hold"><input type="checkbox" id="fHold" /><span></span>🔒 งานนี้ติด HOLD (ห้าม Scrap)</label>
+          <input id="fHoldReason" placeholder="เหตุผล Hold * เช่น รอผล FA / ลูกค้าขอเก็บไว้" hidden />
+        </div>
+        <details class="add-more" id="fMore">
+          <summary>ข้อมูล Job (ไม่บังคับ) · ใช้เมื่อยังไม่มีใน Job Detail</summary>
+          <div class="add-grid">
+            <label>Owner (Requester)<input id="fOwner" /></label>
+            <label>Test Status<input id="fStatus" list="statusList" /></label>
+            <label>Received Date<input id="fRecv" type="date" /></label>
+            <label class="wide">Description<input id="fDesc" /></label>
+          </div>
+          <datalist id="statusList"></datalist>
+        </details>
+        <div class="add-foot">
+          <span id="fJobHint" class="hint-small"></span>
+          <label class="switch" title="Poka-yoke: ต้องสแกน QR ของช่องให้ตรงก่อน จึงจะบันทึกได้"><input type="checkbox" id="fPoka" /><span></span>สแกนยืนยันช่องก่อนบันทึก</label>
+          <div class="add-actions">
+            <button type="reset" class="btn ghost">ล้าง</button>
+            <button type="submit" class="btn primary" id="fSubmit">+ เพิ่มงานเข้า Store</button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- the single 3D stage moves here while Overview is open (and back to the 3D Store tab for full view) -->
+    <div id="overview3dSlot" class="overview-3d"></div>
+
+    <section class="filters panel">
+      <div class="filter-header">
+        <h3>ตัวกรอง <span class="hint-small">เลือกได้หลายค่า · มีผลกับผัง 2D, KPI และ 3D</span></h3>
+        <button class="btn ghost sm" type="button" id="clearFiltersBtn">ล้างตัวกรอง</button>
+      </div>
+      <div class="filter-bar" id="filterBar"></div>
+      <div class="search-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input id="searchBox" class="search" placeholder="กรองผัง: Rack, Item, Job No, Owner, Description..." />
+      </div>
+      <div id="activeFilterText" class="active-filter">Active Filter: All data</div>
+    </section>
+
+    <section class="main-grid">
+      <section>
+        <div class="section-head">
+          <h2 class="section-title">Rack Position Layout</h2>
+          <span class="hint-small">ผังตามของจริง: ยืนที่ T1 หันหน้าเข้าชั้นวาง · Rack A ซ้าย / B ขวา · L = ซ้ายมือ R = ขวามือ · OUT = ใกล้ T1 IN = หลังห้อง · คลิกช่องเพื่อดูรายละเอียด</span>
+        </div>
+        <div id="rackMap" class="rack-map"></div>
+      </section>
+      <aside class="side">
+        <section class="panel"><h3>Top 5 Occupancy</h3><div id="topItems"></div></section>
+        <section class="panel hold-panel"><h3>🔒 งาน Hold · ห้าม Scrap</h3><div id="holdList"></div></section>
+        <section class="panel"><h3>Over Limit Alert</h3><div id="alerts"></div></section>
+        <section class="panel"><h3>Job &amp; Dispose Summary</h3><div id="jobSummary"></div></section>
+      </aside>
+    </section>
+
+  </section>
+
+  <!-- ===================== 3D ===================== -->
+  <section class="view" id="view-3d" hidden>
+    <section class="panel stage-panel" id="stagePanel">
+      <div class="stage-head">
+        <div>
+          <h3>3D Store · HSA Resonance Lab</h3>
+          <span class="hint-small">ลากเพื่อหมุน · ล้อเมาส์เพื่อซูม · คลิกช่องเพื่อดูรายละเอียด · ใช้ตัวกรองเดียวกับ Overview</span>
+        </div>
+        <div class="stage-actions">
+          <button class="btn ghost sm" type="button" id="viewHomeBtn">มุมรวม</button>
+          <button class="btn ghost sm" type="button" id="viewAisleBtn" title="ยืนที่ T1 หันหน้าเข้าชั้นวาง: Rack A ซ้าย · Rack B ขวา">มุมจาก T1</button>
+          <button class="btn ghost sm" type="button" id="viewRacksBtn" title="เห็นชั้นวางทั้ง 2 Rack ใหญ่ อ่านป้ายง่าย">มุมชั้นวาง</button>
+          <button class="btn ghost sm" type="button" id="viewTopBtn">มุมบน</button>
+          <button class="btn ghost sm" type="button" id="spinBtn" aria-pressed="false">หมุนอัตโนมัติ</button>
+          <button class="btn ghost sm" type="button" id="walkBtn" aria-pressed="false" title="เดินในแลปแบบมุมมองคน (WASD)">🚶 เดินในแลป</button>
+          <button class="btn ghost sm" type="button" id="ambBtn" aria-pressed="true" title="แสงตามกะ (เช้า / ดึก) · ไฟเตือนหมุนบนแร็กที่เกินกำหนด">✦ บรรยากาศ</button>
+          <button class="btn primary sm" type="button" id="kioskBtn" title="เปิดเต็มจอสำหรับจอทีวีในแลป · กด Esc เพื่อออก">▣ โหมดจอทีวี</button>
+        </div>
+      </div>
+      <div class="stage-tools">
+        <form class="fly-search" id="flyForm" autocomplete="off">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+          <input id="flyBox" placeholder="ค้นหาแล้วบินไปหา: Job No. / Item / Product แล้วกด Enter" list="flyList" />
+          <datalist id="flyList"></datalist>
+          <button type="button" class="scan-btn" data-scan="fly" title="สแกน QR / บาร์โค้ด" aria-label="สแกน QR หรือบาร์โค้ด">⌗</button>
+          <button type="button" class="scan-btn" id="voiceBtn" title="สั่งด้วยเสียง (กดแล้วพูด) เช่น &quot;หา 1002&quot;, &quot;ช่อง A R ชั้น 2 อิน&quot;, &quot;โหมดทีวี&quot;" aria-label="สั่งด้วยเสียง" hidden>🎤</button>
+          <button type="button" class="clear-btn" id="flyClear" title="ล้างการค้นหา" aria-label="ล้างการค้นหา" hidden>✕</button>
+        </form>
+        <div class="seg" id="modeSeg" role="radiogroup" aria-label="โหมดสี 3D">
+          <button type="button" role="radio" data-mode="normal" aria-checked="true">ปกติ</button>
+          <button type="button" role="radio" data-mode="fill" aria-checked="false">Heatmap ความเต็ม</button>
+          <button type="button" role="radio" data-mode="age" aria-checked="false">X-ray อายุงาน</button>
+        </div>
+      </div>
+      <div class="stage" id="stage">
+        <div class="stage-msg" id="stageMsg">กำลังโหลดโมเดล 3D…</div>
+        <div class="stage-tags" id="stageTags"></div>
+        <div class="fly-results" id="flyResults" hidden></div>
+        <div class="tm-badge" id="tmBadge" hidden></div>
+        <div class="stage-card" id="stageCard" hidden></div>
+        <div class="walk-hud" id="walkHud" hidden><b>🚶 โหมดเดินในแลป</b><span>W A S D / ลูกศร = เดิน · ลากเมาส์ = มองรอบ · Shift = เดินเร็ว · Esc = ออก</span><button type="button" class="btn ghost sm" id="walkExit">ออก</button></div>
+        <div class="voice-hud" id="voiceHud" hidden></div>
+        <!-- guide light on screen (put = green, pick = amber, hold = red); the shelves have no real lamps -->
+        <div class="plight-panel" id="plightPanel" hidden></div>
+        <!-- Pick List: pick work out of the store along the shortest walk -->
+        <div class="pick-panel" id="pickPanel" hidden>
+          <div class="pk-head"><b>Pick List · หยิบงานออก</b><button type="button" class="icon-btn sm" id="pickClose" aria-label="ปิด Pick List">✕</button></div>
+          <div class="pk-ctrl">
+            <div class="seg sm" id="pickSeg" role="radiogroup" aria-label="เลือกงานตาม">
+              <button type="button" role="radio" data-pk="job" aria-checked="true">ตาม Job</button>
+              <button type="button" role="radio" data-pk="owner" aria-checked="false">ตามเจ้าของงาน</button>
+            </div>
+            <input id="pickInput" list="pickList" placeholder="Job No. (หลาย Job คั่นด้วย ,)" autocomplete="off" />
+            <datalist id="pickList"></datalist>
+            <div class="pk-row">
+              <label>เริ่มเดินจาก <select id="pickFrom"><option value="0">T1</option><option value="1">T2</option><option value="2">T3</option></select></label>
+              <div class="seg sm" id="pickSort" role="radiogroup" aria-label="เรียงลำดับ">
+                <button type="button" role="radio" data-ps="route" aria-checked="true">ทางเดินสั้นสุด</button>
+                <button type="button" role="radio" data-ps="fifo" aria-checked="false">FIFO เก่าก่อน</button>
+              </div>
+            </div>
+          </div>
+          <div class="pk-list" id="pickItems"></div>
+          <div class="pk-foot"><span id="pickSum" class="hint-small"></span><button type="button" class="btn danger sm" id="pickDone" disabled>นำออกที่ติ๊ก</button></div>
+        </div>
+        <!-- TV / kiosk overlay -->
+        <div class="kiosk-hud" id="kioskHud" hidden>
+          <div class="k-top">
+            <div class="k-brand"><b>RESONANCE STORE</b><span>HSA Resonance Lab · Live</span></div>
+            <div class="k-kpis" id="kKpis"></div>
+            <div class="k-clock"><b id="kClock">--:--</b><span id="kShift"></span></div>
+            <button type="button" class="k-exit" id="kioskExit" aria-label="ออกจากโหมดจอทีวี">✕</button>
+          </div>
+          <div class="k-andon" id="kAndon"></div>
+          <div class="k-focus" id="kFocus" hidden></div>
+          <div class="k-ticker"><div class="k-track" id="kTicker"></div></div>
+        </div>
+      </div>
+      <div class="tm-bar" id="tmBar">
+        <span class="tm-label">⏱ Time Machine</span>
+        <button type="button" class="btn ghost sm" id="tmPlay" aria-label="เล่นย้อนหลัง">▶ เล่น</button>
+        <input type="range" id="tmRange" min="0" max="1000" value="1000" step="1" aria-label="เลื่อนเวลา" />
+        <span class="tm-time" id="tmTime">ตอนนี้ (Live)</span>
+        <button type="button" class="btn ghost sm" id="tmLive" hidden>กลับปัจจุบัน</button>
+      </div>
+      <div class="stage-foot">
+        <div class="legend" id="stageLegend"></div>
+        <div class="rack-summary" id="rack3dSummary"></div>
+      </div>
+    </section>
+  </section>
+
+  <!-- ===================== INSIGHTS ===================== -->
+  <section class="view" id="view-insights" hidden>
+    <section class="insights" id="insightsPanel">
+      <section class="panel ins-card ins-handover">
+        <div class="data-head">
+          <h3>รายงานส่งกะ (Shift Handover)</h3>
+          <div class="seg sm" id="hoSeg" role="radiogroup" aria-label="เลือกกะ">
+            <button type="button" role="radio" data-ho="0" aria-checked="true">กะนี้</button>
+            <button type="button" role="radio" data-ho="1" aria-checked="false">กะก่อนหน้า</button>
+          </div>
+        </div>
+        <div class="ho-body" id="hoBody"></div>
+        <div class="ins-actions">
+          <button type="button" class="btn primary sm" id="hoCopy">คัดลอกข้อความ</button>
+          <button type="button" class="btn soft sm" id="hoTeams">คัดลอก + เปิด Teams</button>
+          <button type="button" class="btn ghost sm" id="hoPng">บันทึกเป็นรูป PNG</button>
+        </div>
+      </section>
+      <section class="panel ins-card">
+        <div class="data-head"><h3>พยากรณ์วันเต็ม</h3><span class="data-tip">คำนวณจากประวัติเข้า–ออก 14 วันล่าสุด</span></div>
+        <div class="ins-body" id="forecastBody"></div>
+      </section>
+      <section class="panel ins-card">
+        <div class="data-head">
+          <h3>สถิติ Tester</h3>
+          <div class="seg sm" id="statSeg" role="radiogroup" aria-label="แบ่งตาม">
+            <button type="button" role="radio" data-stat="day" aria-checked="true">รายวัน</button>
+            <button type="button" role="radio" data-stat="shift" aria-checked="false">รายกะ</button>
+          </div>
+        </div>
+        <div class="ins-body" id="statBody"></div>
+      </section>
+      <section class="panel ins-card ins-wide kz-card" id="kaizenCard">
+        <div class="data-head">
+          <h3>Kaizen Dashboard · ก่อน / หลังปรับปรุง</h3>
+          <div class="ins-actions" style="padding:0">
+            <button type="button" class="btn soft sm" id="kzExport">Export Kaizen CSV</button>
+            <button type="button" class="btn primary sm" id="weeklyBtn">รายงานประจำสัปดาห์ (PDF)</button>
+          </div>
+        </div>
+        <div class="kz-body" id="kzBody"></div>
+      </section>
+      <section class="panel ins-card">
+        <div class="data-head"><h3>Cycle Count · สุ่มนับประจำกะ</h3><span class="data-tip" id="ccTip"></span></div>
+        <div class="ins-body" id="ccBody"></div>
+      </section>
+      <section class="panel ins-card ins-span2">
+        <div class="data-head"><h3>งานค้าง ≥ 14 วัน · แจ้งเจ้าของงาน</h3><span class="data-tip">อีเมลเดาจากชื่อ (ชื่อ.นามสกุล@seagate.com) · แก้ได้ ระบบจำไว้ให้</span></div>
+        <div class="table-wrap" style="padding-top:12px"><table id="ownerTable"></table></div>
+      </section>
+      <section class="panel ins-card ins-wide">
+        <div class="data-head">
+          <h3>Audit Log · ประวัติทุกการเปลี่ยนแปลง</h3>
+          <div class="job-toolbar" style="padding:0;border:0">
+            <div class="search-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="logSearch" class="search" placeholder="ค้นหา Job, Item, ตำแหน่ง, ผู้บันทึก..." /></div>
+            <button class="btn soft sm" type="button" id="logExport">Export Log CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap"><table id="logTable"></table></div>
+        <p class="hint-small ins-note" id="logNote"></p>
+      </section>
+    </section>
+  </section>
+
+  <!-- ===================== JOBS ===================== -->
+  <section class="view" id="view-jobs" hidden>
+    <section class="panel job-panel" id="jobPanel">
+      <div class="data-head">
+        <h3>Jobs Currently in Store</h3>
+        <span class="data-tip">Days in Store = จำนวนวันนับจาก Received Date ถึงวันนี้</span>
+      </div>
+      <div class="job-filter-bar" id="jobFilterBar"></div>
+      <div class="job-toolbar">
+        <div class="search-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+          <input id="jobSearchBox" class="search" placeholder="ค้นหาเฉพาะตาราง Jobs: Job No, Owner, Description..." />
+        </div>
+        <button class="btn soft" type="button" id="exportJobsBtn">Export Jobs CSV</button>
+      </div>
+      <div class="table-wrap"><table id="currentJobTable"></table></div>
+    </section>
+  </section>
+
+  <!-- ===================== DATA ENTRY ===================== -->
+  <section class="view" id="view-entry" hidden>
+    <section class="panel data-panel" id="entryPanel">
+      <div class="data-head">
+        <h3>Store Data Entry</h3>
+        <span class="data-tip" id="entryTip">แก้ไขข้อมูล Store แล้วกด บันทึกการแก้ไข</span>
+        <button class="btn soft sm" type="button" id="entryAddBtn">＋ เพิ่มแถว</button>
+      </div>
+      <div class="table-wrap tall"><table id="entryTable"></table></div>
+    </section>
+  </section>
+</main>
+</div><!-- /main-col -->
+</div><!-- /shell -->
+
+<dialog id="posDialog" class="pos-dialog" aria-labelledby="posTitle">
+  <div class="dlg-head">
+    <div><span class="dlg-eyebrow" id="posEyebrow"></span><h3 id="posTitle"></h3></div>
+    <button class="icon-btn" type="button" id="posClose" aria-label="ปิด">✕</button>
+  </div>
+  <div class="dlg-body" id="posBody"></div>
+</dialog>
+
+<dialog id="qrDialog" class="pos-dialog" aria-labelledby="qrTitle">
+  <div class="dlg-head">
+    <div><span class="dlg-eyebrow">พิมพ์ติดชั้นวาง / ติดถาดงาน</span><h3 id="qrTitle">ป้าย QR</h3></div>
+    <button class="icon-btn" type="button" data-close aria-label="ปิด">✕</button>
+  </div>
+  <div class="dlg-body">
+    <div class="seg" id="qrSeg" role="radiogroup" aria-label="ชนิดป้าย">
+      <button type="button" role="radio" data-qr="loc" aria-checked="true">ป้ายตำแหน่ง (24 ช่อง)</button>
+      <button type="button" role="radio" data-qr="job" aria-checked="false">ป้ายงานใน Store</button>
+    </div>
+    <div class="qr-grid" id="qrPreview"></div>
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+      <span class="dlg-note">สแกนป้ายตำแหน่ง → เลือกช่องในฟอร์ม / บินไปหาใน 3D · สแกนป้ายงาน → กรอก Job No. ให้อัตโนมัติ</span>
+      <button type="button" class="btn primary sm" id="qrPrint">พิมพ์ / บันทึก PDF</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="scanDialog" class="pos-dialog scan-dialog" aria-labelledby="scanTitle">
+  <div class="dlg-head">
+    <div><span class="dlg-eyebrow">กล้อง หรือเครื่องยิงบาร์โค้ด USB</span><h3 id="scanTitle">สแกน QR / บาร์โค้ด</h3></div>
+    <button class="icon-btn" type="button" data-close aria-label="ปิด">✕</button>
+  </div>
+  <div class="dlg-body">
+    <div class="scan-view"><video id="scanVideo" playsinline muted></video><div class="scan-frame"></div><div class="scan-msg" id="scanMsg">กำลังเปิดกล้อง…</div></div>
+    <label class="scan-input"><span>เครื่องยิง USB: ยิงได้เลย หรือพิมพ์แล้วกด Enter</span><input id="scanInput" autocomplete="off" placeholder="รอรับค่าจากเครื่องยิง…" /></label>
+  </div>
+</dialog>
+
+<!-- Ctrl+K command palette -->
+<dialog id="cmdk" class="cmdk" aria-label="ค้นหาคำสั่ง">
+  <div class="cmdk-in"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="cmdkInput" placeholder="พิมพ์คำสั่ง ตำแหน่ง (เช่น A-R 2 IN) หรือ Job No." autocomplete="off" /><kbd>Esc</kbd></div>
+  <div class="cmdk-list" id="cmdkList" role="listbox"></div>
+  <div class="cmdk-foot"><span>↑ ↓ เลือก</span><span>Enter ทำเลย</span><span>Esc ปิด</span></div>
+</dialog>
+
+<!-- one-page standard work -->
+<dialog id="guideDialog" class="pos-dialog guide-dialog" aria-labelledby="guideTitle">
+  <div class="dlg-head">
+    <div><span class="dlg-eyebrow">Standard Work · Resonance Store</span><h3 id="guideTitle">คู่มือการใช้งาน 1 หน้า</h3></div>
+    <div style="display:flex;gap:6px"><button class="btn soft sm" type="button" id="tourBtn">▶ เริ่มทัวร์แนะนำ</button><button class="btn ghost sm" type="button" id="guidePrint">พิมพ์</button><button class="icon-btn" type="button" data-close aria-label="ปิด">✕</button></div>
+  </div>
+  <div class="dlg-body guide" id="guideBody"></div>
+</dialog>
+
+<!-- hold / release a job -->
+<dialog id="holdDialog" class="pos-dialog hold-dialog" aria-labelledby="holdTitle">
+  <form id="holdForm" method="dialog" autocomplete="off">
+    <div class="dlg-head">
+      <div><span class="dlg-eyebrow" id="holdEyebrow"></span><h3 id="holdTitle"></h3></div>
+      <button class="icon-btn" type="button" data-close aria-label="ปิด">✕</button>
+    </div>
+    <div class="dlg-body">
+      <div class="hold-now" id="holdNow" hidden></div>
+      <label class="hold-field"><span id="holdWhoLbl">ผู้ติด Hold *</span><input id="holdWho" maxlength="40" /></label>
+      <label class="hold-field"><span>เหตุผล *</span><input id="holdReason" maxlength="120" /></label>
+      <div class="hold-foot">
+        <span class="dlg-note">ทุกครั้งบันทึกใน Audit Log · ชื่อ เวลา เหตุผล</span>
+        <div><button type="button" class="btn ghost" data-close>ยกเลิก</button> <button type="submit" class="btn danger" id="holdOk">🔒 ติด Hold</button></div>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<!-- backup & restore (filled by sync.js) -->
+<dialog id="backupDialog" class="pos-dialog backup-dialog" aria-labelledby="backupTitle">
+  <div class="dlg-head">
+    <div><span class="dlg-eyebrow">กันข้อมูลหาย · ระบบล่มก็ยังทำงานต่อได้</span><h3 id="backupTitle">🛡 Backup &amp; กู้คืนข้อมูล</h3></div>
+    <button class="icon-btn" type="button" data-close aria-label="ปิด">✕</button>
+  </div>
+  <div class="dlg-body" id="backupBody"></div>
+</dialog>
+
+<dialog id="zoneDialog" class="pos-dialog zone-dialog" aria-labelledby="zoneTitle">
+  <div class="dlg-head">
+    <div><span class="dlg-eyebrow">1 ช่อง = 1 Product + 1 Type · ห้ามวางงานผิดประเภทรวมกัน</span><h3 id="zoneTitle">🗂 ตั้งค่าโซน</h3></div>
+    <button class="icon-btn" type="button" data-close aria-label="ปิด">✕</button>
+  </div>
+  <div class="dlg-body">
+    <p class="dlg-note">Product / Type ใส่ได้หลายค่า คั่นด้วยจุลภาค · <b>*</b> = ทุก Product · ติ๊ก HOLD = ช่องนี้รับเฉพาะงานที่ติด Hold · วางถาด: ตั้งละ ≤ <span id="zoneStackTxt"></span></p>
+    <div class="zone-wrap"><table class="zone-table"><thead><tr><th>ตำแหน่ง</th><th>HOLD</th><th>Product</th><th>Type</th><th>หมายเหตุ</th><th>ตอนนี้ในช่อง</th></tr></thead><tbody id="zoneBody"></tbody></table></div>
+    <div class="zone-actions">
+      <button type="button" class="btn ghost sm" id="zoneReset">คืนค่าผังแนะนำ</button>
+      <button type="button" class="btn ghost sm" id="zonePrint">🖨 พิมพ์ป้ายโซน</button>
+      <button type="button" class="btn primary sm" id="zoneSave">บันทึกผังโซน</button>
+    </div>
+  </div>
+</dialog>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- sync.js pulls the shared data from the server first, then loads app.js -->
+<script src="sync.js"></script>
+</body>
+</html>

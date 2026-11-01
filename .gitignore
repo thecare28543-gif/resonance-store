@@ -1,0 +1,12 @@
+# live data and backups belong to the server, never to the repository
+app/data/
+data/
+*.tmp
+
+# lab files: real job data
+*.xlsx
+*.csv
+
+# presentation material
+*.pptx
+*.mp4

@@ -132,7 +132,7 @@
       </div>
       <form id="addForm" class="add-form" autocomplete="off" novalidate>
         <div class="add-grid">
-          <label><span>Job No. <em>*</em></span><span class="with-btn"><input id="fJob" placeholder="เช่น J_1234 หรือสแกน" /><button type="button" class="scan-btn" data-scan="form" title="สแกน QR / บาร์โค้ด" aria-label="สแกน QR หรือบาร์โค้ด">⌗</button></span></label>
+          <label><span>Job No. <em>*</em></span><span class="with-btn"><input id="fJob" placeholder="พิมพ์เลข Job No. หรือสแกน" title="พิมพ์เลข Job No. ตามใบงาน หรือกด ⌗ เพื่อสแกน · พิมพ์ - ระบบเปลี่ยนเป็น _ ให้เอง" /><button type="button" class="scan-btn" data-scan="form" title="สแกน QR / บาร์โค้ด" aria-label="สแกน QR หรือบาร์โค้ด">⌗</button></span></label>
           <label><span>Type <em>*</em></span><input id="fItem" list="typeList" placeholder="WKL / EVL / QUL / FA" /></label>
           <datalist id="typeList"><option value="WKL"><option value="EVL"><option value="QUL"><option value="FA"><option value="WKL_FA"><option value="N/A"></datalist>
           <label>Product<input id="fProduct" list="productList" placeholder="เช่น DORADO" /></label>
@@ -346,6 +346,7 @@
           <h3>Kaizen Dashboard · ก่อน / หลังปรับปรุง</h3>
           <div class="ins-actions" style="padding:0">
             <button type="button" class="btn soft sm" id="kzExport">Export Kaizen CSV</button>
+            <button type="button" class="btn soft sm" id="kzWeekly">Export ผลรายสัปดาห์</button>
             <button type="button" class="btn primary sm" id="weeklyBtn">รายงานประจำสัปดาห์ (PDF)</button>
           </div>
         </div>

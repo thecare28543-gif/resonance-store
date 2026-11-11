@@ -1,0 +1,16 @@
+{
+  "port": 8080,
+  "dataDir": "data",
+  "backupDir": "",
+  "keepDays": 30,
+  "sessionHours": 12,
+  "secureCookie": "auto",
+  "trustProxy": true,
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "database": "resonance_store",
+    "user": "rs_app",
+    "password": "ใส่รหัสของ rs_app ที่ตั้งใน pgAdmin"
+  }
+}

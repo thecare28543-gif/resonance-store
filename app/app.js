@@ -24,6 +24,9 @@ const STORE_COLS = ['RACK','SIDE','FLOOR','CELL','STORE_LOCATION','ITEM','PRODUC
 const EXTRA_COLS = ['TESTER', 'TRAY'];
 const EXPORT_COLS = [...STORE_COLS, ...EXTRA_COLS];
 const TESTERS = ['T1','T2','T3'];
+/* name shown after "Tester 01" in the form and the 3D view (the data keeps T1/T2/T3) · '' = number only */
+const TESTER_NAME = { T1:'', T2:'', T3:'' };
+const testerTxt = t => { const m = /^T(\d+)$/.exec(t || ''); if (!m) return t || ''; return `Tester ${m[1].padStart(2, '0')}${TESTER_NAME[t] ? ` · ${TESTER_NAME[t]}` : ''}`; };
 const JOB_COLS = ['Job No.','Test Status','Work Week','Job Type','Group Name','Product','Requester Name','Description','Test Qty','Special Remark','Received Date','Completed Date','URL Package'];
 const DISPOSE_OPTIONS = [
   { value:'Pending', label:'รอตัดสินใจ (Pending)', cls:'pending' },
@@ -31,8 +34,7 @@ const DISPOSE_OPTIONS = [
   { value:'Scrap', label:'ส่งทำ Scrap (Scrap)', cls:'scrap' },
   { value:'Other', label:'อื่นๆ (Other)', cls:'other' }
 ];
-/* Team alert target: the lab's Teams chat link and/or team e-mail addresses. Filled in on the server at deployment;
-   kept empty in the repository (internal links and addresses do not belong in source control). */
+/* team e-mail / Teams chat link for "แจ้งทีม": fill in at deployment (kept out of the repository) */
 const HSA_TEAM_EMAILS = [];
 /* Lab shift rotation (12-day cycle): Day x4, Off x2, Night x4, Off x2. Day 06:00-18:00, Night 18:00-06:00.
    Anchor 4 Oct 2026: crew C on day #4, crew A on night #2, crew B off. */
@@ -45,6 +47,8 @@ const DEFAULT_STORE = [];
 /* ===================== STATE ===================== */
 const readJSON = (k, fallback) => { try { return JSON.parse(localStorage.getItem(k) || 'null') ?? fallback; } catch { return fallback; } };
 let store = (readJSON('resStoreV7', null) || structuredClone(DEFAULT_STORE));
+/* the saved store this PC last saw: unsaved Data Entry edits are merged against it when another PC saves */
+let storeSeen = [];
 let jobs  = readJSON('jobDetailV7', {});
 let disposeData = readJSON('disposeDataV7', {});
 let lastNotifiedKey = localStorage.getItem('lastNotifiedKeyV7') || '';
@@ -78,11 +82,12 @@ const undo = { stack:[], redo:[], last:null, applying:false };
 function saveLocal(){
   const prev = undo.last;
   if (commitLog() && prev && !undo.applying){
-    undo.stack.push({ rows: prev, label: evSummary(lastCommit) });
+    undo.stack.push({ rows: prev, after: structuredClone(store), label: evSummary(lastCommit) });
     if (undo.stack.length > 30) undo.stack.shift();
     undo.redo = [];
   }
   undo.last = structuredClone(store);
+  storeSeen = structuredClone(store);
   updateUndoUI();
   try {
     localStorage.setItem('resStoreV7', JSON.stringify(store));
@@ -119,7 +124,10 @@ function holdBlock(job, what){
    zones[key "A|L|2|IN"] = { prod:['DORADO'] | ['*'], type:['EVL'] | ['*'], hold:true, note }. A position with no entry takes anything.
    Trays sit in stacks: stack 1 is the left one seen standing in front of the shelf, filled up to TRAYS_PER_STACK before the next. */
 const TRAYS_PER_STACK = 4, STACKS_PER_ZONE = 4, TRAYS_PER_ZONE = TRAYS_PER_STACK * STACKS_PER_ZONE;
-const DEFAULT_ZONES = {
+/* a fresh install starts with no zones (every position takes anything); the team sets them up in "ผังโซน".
+   RECOMMENDED_ZONES is the lab's suggested layout, loaded only with the "คืนค่าผังโซนแนะนำ" button */
+const DEFAULT_ZONES = {};
+const RECOMMENDED_ZONES = {
   'A|L|1|IN': { prod:['*'], type:['N/A'], note:'Dummy / Ref' }, 'A|L|1|OUT': { prod:['*'], type:['N/A'], note:'Dummy / Ref' },
   'A|L|2|IN': { prod:['*'], type:['WKL'] }, 'A|L|2|OUT': { prod:['*'], type:['EVL'] },
   'A|L|3|IN': { prod:['*'], type:['QUL'] }, 'A|L|3|OUT': { prod:['*'], type:['FA', 'WKL_FA'] },
@@ -171,6 +179,25 @@ function slotText(key, addTrays){
   if (n + (addTrays || 1) > TRAYS_PER_ZONE) return { full: true, text: `โซนนี้วางได้ ${TRAYS_PER_ZONE} ถาด (${STACKS_PER_ZONE} ตั้ง × ${TRAYS_PER_STACK}) มีอยู่ ${n} ถาด` };
   return { full: false, n, text: `วางถาดแรกที่ ตั้ง ${Math.floor(n / TRAYS_PER_STACK) + 1} เป็นถาดที่ ${n % TRAYS_PER_STACK + 1} จากล่าง (ตั้งนับจากซ้ายเมื่อยืนหน้าชั้น · ตั้งละ ≤ ${TRAYS_PER_STACK} ถาด)` };
 }
+/* the same as a picture, seen standing in front of the shelf: stacks left to right, trays bottom up;
+   grey = trays already there, orange = the new ones, ★ = where the first new tray goes */
+function slotPic(key, addTrays){
+  const n = zoneTrays(key), add = Math.max(1, addTrays || 1);
+  let cols = '';
+  for (let s = 0; s < STACKS_PER_ZONE; s++){
+    let cells = '';
+    for (let l = TRAYS_PER_STACK - 1; l >= 0; l--){
+      const i = s * TRAYS_PER_STACK + l;
+      const cls = i < n ? 'have' : i < n + add ? (i === n ? 'new first' : 'new') : '';
+      cells += `<i class="${cls}">${i === n ? '★' : i < n + add && i > n ? i - n + 1 : ''}</i>`;   /* new trays numbered in placing order */
+    }
+    cols += `<div class="sp-stack${Math.floor(n / TRAYS_PER_STACK) === s ? ' on' : ''}">${cells}<b>ตั้ง ${s + 1}</b></div>`;
+  }
+  return `<div class="slot-pic" role="img" aria-label="ภาพตำแหน่งวางถาด">
+    <div class="sp-rack">${cols}</div>
+    <div class="sp-legend"><span><i class="have"></i>มีอยู่ ${n}</span><span><i class="new"></i>วางใหม่ ${add}</span><span>★ ถาดแรก · ตั้งนับจากซ้าย ↔ ยืนหน้าชั้น · ถาดนับจากล่าง ↑</span></div>
+  </div>`;
+}
 /* best position for a job that has to move (hold <-> normal zone): allowed, room for all of it, dedicated zone first */
 function findZoneFor(jobKey){
   const rows = store.filter(r => normJob(r.JOB_NO) === jobKey); if (!rows.length) return null;
@@ -210,6 +237,7 @@ function normRow(r){
   return o;
 }
 store = store.map(normRow);
+storeSeen = structuredClone(store);
 
 /* ===================== HISTORY LOG (Time Machine · audit · forecast · tester stats) =====================
    Every save is diffed against the last saved snapshot; each changed row becomes one event
@@ -859,16 +887,21 @@ function renderJobsTable(){
     const dp = disposeOf(x.jobNo);
     const opt = DISPOSE_OPTIONS.find(o => o.value === dp.status) || DISPOSE_OPTIONS[0];
     const h = holdData[x.key];
+    /* Owner / Product / Description / Test Status / Tester are edited right here (saved at once); a held job is locked */
+    const edit = (f, v, ph, wide) => h ? esc(v || '-') : `<input class="job-edit${wide ? ' wide' : ''}" data-jedit="${esc(x.key)}" data-f="${f}" value="${esc(v || '')}" placeholder="${ph}" title="แก้แล้วกด Enter หรือคลิกที่อื่น · บันทึกทันที">`;
+    const tSet = [...x.testerSet], tNow = tSet.length === 1 ? tSet[0] : tSet.length ? '*' : '';
+    const tester = h ? (tSet.length ? `<span class="status-pill">${esc(tSet.map(testerTxt).join(', '))}</span>` : '-')
+      : `<select class="job-edit" data-jtester="${esc(x.key)}">${tNow === '*' ? `<option value="*" selected>หลายเครื่อง: ${esc(tSet.map(testerTxt).join(', '))}</option>` : ''}${['', ...TESTERS].map(t => `<option value="${t}" ${t === tNow ? 'selected' : ''}>${t ? esc(testerTxt(t)) : 'ไม่ระบุ'}</option>`).join('')}</select>`;
     return `<tr class="${h ? 'held' : ''}">
       <td><b>${esc(x.jobNo)}</b></td>
       <td><button type="button" class="hold-btn ${h ? 'on' : ''}" data-hold="${esc(x.key)}" title="${h ? esc(`Hold โดย ${h.by} · ${h.reason} · กดเพื่อปลด`) : 'ติด Hold: ห้าม Scrap / ห้ามหยิบออก'}">${h ? '🔒 HOLD' : 'ติด Hold'}</button></td>
-      <td>${d ? esc(d['Requester Name'] || '-') : '<span class="missing">ไม่พบใน Job Detail</span>'}</td>
-      <td>${esc(jobProduct(x) || '-')}</td>
-      <td><div class="jobdesc" title="${esc(d && d['Description'])}">${esc((d && d['Description']) || '-')}</div></td>
-      <td>${d && d['Test Status'] ? `<span class="status-pill">${esc(d['Test Status'])}</span>` : '-'}</td>
+      <td>${edit('Requester Name', d && d['Requester Name'], d ? 'ใส่ชื่อ Owner' : 'ไม่พบใน Job Detail · ใส่ชื่อ')}</td>
+      <td>${edit('Product', jobProduct(x), 'Product')}</td>
+      <td>${h ? `<div class="jobdesc" title="${esc(d && d['Description'])}">${esc((d && d['Description']) || '-')}</div>` : edit('Description', d && d['Description'], 'รายละเอียดงาน', true)}</td>
+      <td>${h ? (d && d['Test Status'] ? `<span class="status-pill">${esc(d['Test Status'])}</span>` : '-') : edit('Test Status', d && d['Test Status'], 'สถานะ')}</td>
       <td class="n"><b>${x.qty}</b></td>
       <td><div class="loc-tags">${x.locationsArr.map(l => `<span class="loc-tag">${esc(l)}</span>`).join('')}</div></td>
-      <td>${x.testers ? `<span class="status-pill">${esc(x.testers)}</span>` : '-'}</td>
+      <td>${tester}</td>
       <td>${fmtDate(x.recv)}</td>
       <td>${x.days === null ? '-' : `<span class="days-badge ${daysBadgeClass(x.days)}">${x.days} วัน</span>`}</td>
       <td class="dispose-cell"><select class="dispose-select ${opt.cls}" data-dispose="${esc(x.key)}">${DISPOSE_OPTIONS.map(o => `<option value="${esc(o.value)}" ${o.value === opt.value ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select></td>
@@ -894,9 +927,12 @@ function exportJobs(){
 /* ===================== DATA ENTRY TABLE ===================== */
 const SELECTS = { RACK:['A','B'], SIDE:['L','R'], FLOOR:['1','2','3'], CELL:['IN','OUT'], TESTER:['', ...TESTERS], TRAY:['', 'IM', 'FOF'] };
 function entryCell(r, c){
+  /* a held job is locked here too: change it only after the hold is released */
+  const label = v => c === 'TESTER' ? (testerTxt(v) || '-') : v;
+  if (isHeld(r.JOB_NO)) return `<td><input data-col="${c}" value="${esc(label(String(r[c] ?? '')))}" disabled title="งานติด HOLD · ปลด Hold ก่อนจึงแก้ไขได้"></td>`;
   if (SELECTS[c]){
     const opts = SELECTS[c].includes(String(r[c])) ? SELECTS[c] : [String(r[c]), ...SELECTS[c]];
-    return `<td><select data-col="${c}">${opts.map(v => `<option ${String(r[c]) === v ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select></td>`;
+    return `<td><select data-col="${c}">${opts.map(v => `<option value="${esc(v)}" ${String(r[c]) === v ? 'selected' : ''}>${esc(label(v))}</option>`).join('')}</select></td>`;
   }
   if (c === 'QUANITY') return `<td><input data-col="${c}" type="number" min="0" step="1" value="${esc(r[c])}" style="width:84px"></td>`;
   if (c === 'STORE_LOCATION') return `<td><input data-col="${c}" value="${esc(r[c])}" readonly tabindex="-1" title="คำนวณอัตโนมัติจาก Rack/Side/Floor/Cell"></td>`;
@@ -906,7 +942,7 @@ function entryCell(r, c){
 function renderEntryTable(){
   const head = `<thead><tr>${EXPORT_COLS.map(c => `<th>${c}</th>`).join('')}<th></th></tr></thead>`;
   if (!store.length){ $('entryTable').innerHTML = head + `<tbody><tr><td colspan="${EXPORT_COLS.length + 1}" class="empty-table">ยังไม่มีข้อมูล · Import Store CSV/XLSX หรือกด "+ เพิ่ม Store Row"</td></tr></tbody>`; return; }
-  $('entryTable').innerHTML = head + '<tbody>' + store.map(r => `<tr data-id="${r._id}">${EXPORT_COLS.map(c => entryCell(r, c)).join('')}
+  $('entryTable').innerHTML = head + '<tbody>' + store.map(r => `<tr data-id="${r._id}"${isHeld(r.JOB_NO) ? ' class="held"' : ''}>${EXPORT_COLS.map(c => entryCell(r, c)).join('')}
     <td><div class="row-actions">${String(r.CELL).toUpperCase() === 'IN' ? `<button type="button" class="mini-btn move" data-move="${r._id}">ย้าย → OUT</button>` : ''}<button type="button" class="mini-btn del" data-del="${r._id}" aria-label="ลบแถว">ลบ</button></div></td></tr>`).join('') + '</tbody>';
 }
 function setDirty(v){
@@ -1026,12 +1062,16 @@ async function importStore(file){
     const bad = rows.filter(r => !RACK_SIDES.includes(`${r.RACK}-${r.SIDE}`) || !FLOORS.includes(String(r.FLOOR)) || !CELLS.includes(r.CELL)).length;
     if (dirty && !confirm('มีการแก้ไขที่ยังไม่ได้บันทึก การ Import จะเขียนทับข้อมูล Store ทั้งหมด ต้องการทำต่อไหม?')) return;
     adoptIds(rows, histSnap);
+    /* a held job missing from the file stays where it is: Import must not make a held job disappear */
+    const inFile = new Set(rows.map(r => normJob(r.JOB_NO)));
+    const keptHeld = store.filter(r => isHeld(r.JOB_NO) && !inFile.has(normJob(r.JOB_NO)));
+    rows.push(...keptHeld);
     store = rows;
     logCtx = { src:'import' };
     saveAll(false); buildFilterBar(); buildJobFilterBar(); renderAll();
     /* the 3D store redraws from the same data; bring the camera back to the full view so the new trays are visible */
     if (three.ready){ tmLive(); clearFly(); three.go('home'); }
-    showToast('Import Store สำเร็จ · อัปเดต 3D แล้ว', `${rows.length} รายการ · ${fmt(sumQty(rows))} ชิ้น${sheet ? ` · จากชีต "${sheet}"` : ''}${skipped ? ` · ข้ามแถวว่าง ${skipped}` : ''}${bad ? ` · ${bad} แถวตำแหน่งไม่ตรงผัง` : ''}`, bad ? 'warn' : 'success');
+    showToast('Import Store สำเร็จ · อัปเดต 3D แล้ว', `${rows.length} รายการ · ${fmt(sumQty(rows))} ชิ้น${sheet ? ` · จากชีต "${sheet}"` : ''}${skipped ? ` · ข้ามแถวว่าง ${skipped}` : ''}${bad ? ` · ${bad} แถวตำแหน่งไม่ตรงผัง` : ''}${keptHeld.length ? ` · 🔒 เก็บงาน Hold ที่ไม่มีในไฟล์ไว้ ${keptHeld.length} แถว` : ''}`, bad || keptHeld.length ? 'warn' : 'success');
   } catch (e){ showToast('Import ไม่สำเร็จ', e.message || String(e), 'error'); }
 }
 async function importJobs(file){
@@ -1060,13 +1100,16 @@ function exportStore(){
   showToast('Export สำเร็จ', `${store.length} rows${dirty ? ' (รวมรายการที่ยังไม่ได้ Save)' : ''}`);
 }
 function resetData(){
-  if (!confirm('ลบข้อมูล Store, Job Detail และ Dispose ทั้งหมดในเครื่องนี้?\nควร Export CSV เก็บไว้ก่อน')) return;
-  store = []; jobs = {}; disposeData = {};
+  /* held jobs are kept (rows, job detail, dispose): they leave only after the hold is released */
+  const held = store.filter(r => isHeld(r.JOB_NO)), heldKeys = new Set(held.map(r => normJob(r.JOB_NO)));
+  if (!confirm(`ลบข้อมูล Store, Job Detail และ Dispose ทั้งหมดในเครื่องนี้?\nควร Export CSV เก็บไว้ก่อน${held.length ? `\n\n🔒 งานติด HOLD ${heldKeys.size} Job (${held.length} แถว) จะไม่ถูกลบ · ต้องปลด Hold ก่อน` : ''}`)) return;
+  const keepOf = obj => Object.fromEntries(Object.entries(obj).filter(([k]) => heldKeys.has(k)));
+  store = held; jobs = keepOf(jobs); disposeData = keepOf(disposeData);
   Object.keys(filterState).forEach(k => filterState[k].clear());
   Object.keys(jobFilterState).forEach(k => jobFilterState[k].clear());
   logCtx = { src:'reset' };
   saveAll(false); buildFilterBar(); buildJobFilterBar(); renderAll();
-  showToast('Reset แล้ว', 'ข้อมูลในเครื่องนี้ถูกล้างแล้ว', 'info');
+  showToast('Reset แล้ว', `ข้อมูลในเครื่องนี้ถูกล้างแล้ว${held.length ? ` · เก็บงาน Hold ไว้ ${held.length} แถว` : ''}`, 'info');
 }
 
 /* ===================== ADD WORK (receive into store) ===================== */
@@ -1079,7 +1122,7 @@ function initAddForm(){
   opt('fSide', [...new Set(RACK_SIDES.map(k => k.split('-')[1]))].map(s => [s, `${s} · ${sideTxt(s)}`]));
   opt('fFloor', FLOORS.map(f => [f, f]));
   opt('fCell', CELLS.map(c => [c, `${c} · ${cellTxt(c)}`]));
-  opt('fTester', [...TESTERS.map(t => [t, `${t} · HDD Tester`]), ['', 'ไม่ระบุ']]);
+  opt('fTester', [...TESTERS.map(t => [t, testerTxt(t)]), ['', 'ไม่ระบุ']]);
   try { const lt = localStorage.getItem('resLastTesterV1'); if (lt !== null) $('fTester').value = lt; } catch {}
   $('fCell').value = 'IN';
   try { $('fType').value = localStorage.getItem('resLastTypeV1') ?? 'IM'; } catch {}
@@ -1123,7 +1166,7 @@ function updateAddForm(){
   const slot = slotText(key, add ? traysOf(add, $('fType').value || 'OTHER') : 1);
   $('fCap').innerHTML = `<span class="cap ${after > LIMIT ? 'over' : st}">${rk}-${sd} · ชั้น ${f} · ${cell}: มีอยู่ ${cur}/${LIMIT} · รับเพิ่มได้ ${left} ชิ้น${add ? ` · หลังเพิ่ม ${after}/${LIMIT}` : ''}${trays}</span>
     <span class="cap zone${isHoldZone(key) ? ' hold' : ''}">โซน: ${esc(zoneText(key))}</span>
-    ${zWhy ? `<span class="cap over">⛔ ผิดโซน: ${esc(zWhy)}</span>` : `<span class="cap ${slot.full ? 'over' : 'slot'}">${slot.full ? '⛔ ' : '▦ '}${esc(slot.text)}</span>`}`;
+    ${zWhy ? `<span class="cap over">⛔ ผิดโซน: ${esc(zWhy)}</span>` : `<span class="cap ${slot.full ? 'over' : 'slot'}">${slot.full ? '⛔ ' : '▦ '}${esc(slot.text)}</span>${slot.full ? '' : slotPic(key, add ? traysOf(add, $('fType').value || 'OTHER') : 1)}`}`;
   /* a wrong zone stays clickable: submitAdd blocks it and counts one prevented mistake per attempt */
   $('fSubmit').disabled = after > LIMIT || slot.full;
   if (after > LIMIT && add) kzBlock('over', `${rk}-${sd}-${f}-${cell}`);
@@ -1678,7 +1721,7 @@ function build3D(){
     prop(0.5, 0.03, 0.5, '#4A535C', x, 0.03, SEAT_Z, .5, .5);
     const seated = makeOperator(x, SEAT_Z); scene.add(seated);
     benchOps[i] = { seated, x };
-    benches.push({ label:`T${i + 1} · HDD Tester`, pos:new T.Vector3(x, 1.5, BENCH_Z) });
+    benches.push({ label:testerTxt(`T${i + 1}`), pos:new T.Vector3(x, 1.5, BENCH_Z) });
   });
 
   /* Racks: blue uprights, orange beams, steel decks, yellow zone lines (same look as the original HSA 3D store) */
@@ -2528,7 +2571,7 @@ function handoverPNG(){
 
 /* ===================== INSIGHTS: AUDIT LOG ===================== */
 const ACTION_TEXT = { add:'รับเข้า', del:'นำออก / ลบ', move:'ย้าย IN → OUT', relocate:'ย้ายตำแหน่ง', edit:'แก้ไข' };
-const SRC_TEXT = { form:'ฟอร์มรับงาน', move:'ปุ่มย้าย', entry:'Data Entry', import:'Import ไฟล์', reset:'Reset', external:'แก้จากที่อื่น', undo:'Undo', redo:'Redo', pick:'Pick List' };
+const SRC_TEXT = { form:'ฟอร์มรับงาน', move:'ปุ่มย้าย', entry:'Data Entry', import:'Import ไฟล์', reset:'Reset', external:'แก้จากที่อื่น', undo:'Undo', redo:'Redo', pick:'Pick List', jobs:'ตาราง Jobs', zone:'ย้ายเข้าโซน' };
 const HOLD_TEXT = { hold:'🔒 ติด Hold', release:'ปลด Hold', block:'⛔ กัน Hold' };
 function logRows(){
   const q = $('logSearch').value.toLowerCase().trim();
@@ -2809,10 +2852,17 @@ function updateUndoUI(){
 }
 function applyUndo(from, to, src, title){
   if (dirty){ showToast('มีการแก้ไขที่ยังไม่ได้บันทึก', 'กด Save Changes ก่อน แล้วค่อย Undo / Redo', 'warn'); return; }
-  const s = from.pop(); if (!s){ showToast(title, 'ไม่มีรายการ', 'info'); return; }
-  to.push({ rows: structuredClone(store), label: s.label });
+  const s = from[from.length - 1]; if (!s){ showToast(title, 'ไม่มีรายการ', 'info'); return; }
+  /* step back only the rows this step changed (after -> rows); what other PCs saved since stays */
+  const next = (s.after && window.RS_SYNC ? RS_SYNC.merge(s.after, s.rows, store) : structuredClone(s.rows)).map(normRow);
+  /* undo must not move or remove a held job either */
+  const pack = r => JSON.stringify(packRow(r)), nextById = new Map(next.map(r => [r._id, r]));
+  const heldHit = store.find(r => isHeld(r.JOB_NO) && (!nextById.has(r._id) || pack(nextById.get(r._id)) !== pack(r)));
+  if (heldHit){ holdBlock(heldHit.JOB_NO, title.startsWith('ย้อน') ? 'Undo' : 'Redo'); return; }
+  from.pop();
+  to.push({ rows: s.after, after: s.rows, label: s.label });
   undo.applying = true;
-  store = structuredClone(s.rows);
+  store = next;
   logCtx = { src };
   saveAll(false);
   undo.applying = false;
@@ -3153,9 +3203,12 @@ function weeklyReport(){
 }
 
 /* ===================== KAIZEN: timing, before / after, ROI ===================== */
-const kz = Object.assign({ find:[], add:[], base:[], blocks:[], set:{ wage:'', findPerDay:'', addPerDay:'' } }, readJSON('resKaizenV1', {}));
+/* floor = real after-system search on the floor (owner asks → job handed over), timed by hand; miss = a job nobody could find */
+const kz = Object.assign({ find:[], add:[], base:[], blocks:[], floor:[], miss:[], set:{ wage:'', findPerDay:'', addPerDay:'' } }, readJSON('resKaizenV1', {}));
 const kzRun = { findAt:0, addAt:0, stopwatch:null };
-const kzSave = () => { ['find', 'add', 'base', 'blocks'].forEach(k => { if (kz[k].length > 3000) kz[k] = kz[k].slice(-3000); }); try { localStorage.setItem('resKaizenV1', JSON.stringify(kz)); } catch {} };
+const kzSave = () => { ['find', 'add', 'base', 'blocks', 'floor', 'miss'].forEach(k => { if (kz[k].length > 3000) kz[k] = kz[k].slice(-3000); }); try { localStorage.setItem('resKaizenV1', JSON.stringify(kz)); } catch {} };
+const KZ_TASK = { find:'หางาน (Before)', add:'รับงานเข้า (Before)', floor:'หางานหน้างาน (หลัง)' };
+const kzList = task => task === 'floor' ? kz.floor : kz.base;   // where a hand-timed value goes
 /* "finding" starts when someone starts to look (search box, Ctrl+K, scan, voice) and ends when the zone is on screen */
 function kzFindStart(){ if (!kzRun.findAt || performance.now() - kzRun.findAt > 3e5) kzRun.findAt = performance.now(); }
 function kzFindDone(via){
@@ -3197,6 +3250,7 @@ function kaizenStats(){
     heldNow: Object.keys(holdData).length, holdAudits: readJSON('resHoldAuditV1', []).filter(a => a.t > now - 30 * DAY),
     ccTotal: cc.length, ccOk, ccAcc: cc.length ? Math.round(ccOk / cc.length * 100) : null,
     agingNow, agingStart, outs7: histLog.filter(e => e.a === 'del' && e.t > now - 7 * DAY).length,
+    floorAfter: avg(kz.floor.slice(-200)), nFloor: kz.floor.length, miss30: kz.miss.filter(m => m.t > now - 30 * DAY).length,
   };
 }
 function renderKaizen(){
@@ -3227,21 +3281,24 @@ function renderKaizen(){
         <div class="kz-hold"><span>สแกนป้ายผิดตอน Scrap</span><b>${s.blocksScrap}</b><small>ครั้งที่กันได้</small></div>
         <div class="kz-hold"><span>ตรวจงาน Hold ประจำกะ</span><b>${s.holdAudits.length ? Math.round(s.holdAudits.filter(a => a.ok).length / s.holdAudits.length * 100) + '%' : '-'}</b><small>พบครบ 30 วัน (${s.holdAudits.filter(a => a.ok).length}/${s.holdAudits.length})</small></div>
         <div class="kz-zone"><span>🗂 กันวางผิดโซน (Product / Type / HOLD)</span><b>${s.blocksZone}</b><small>ครั้งที่ระบบบล็อก · ตอนนี้ผิดโซน ${s.zoneWrong} รายการ</small></div>
+        <div><span>⏱ หางานหน้างาน (หลัง)</span><b>${secTxt(s.floorAfter)}</b><small>Owner ขอ → ส่งงาน · จับเวลา ${s.nFloor} ครั้ง</small></div>
+        <div><span>✕ หาไม่เจอ</span><b>${s.miss30}</b><small>ครั้ง ใน 30 วัน</small></div>
       </div>
     </div>
     <div class="kz-row">
       <div class="kz-base">
-        <div class="sum-title">โหมดจับเวลาแบบเดิม (Before)</div>
-        <p class="hint-small">ให้คนทำงานแบบเดิม (ไม่ใช้ระบบนี้) แล้วกดจับเวลา · หรือใส่เวลาที่วัดไว้แล้วเป็นวินาที</p>
+        <div class="sum-title">จับเวลาด้วยมือ (Before · หน้างานจริงหลังมีระบบ)</div>
+        <p class="hint-small">Before: ให้คนทำงานแบบเดิม (ไม่ใช้ระบบนี้) แล้วกดจับเวลา · หน้างาน (หลัง): เริ่มตอน Owner ขอ หยุดตอนส่งงานถึงมือ · หรือใส่เวลาที่วัดไว้แล้วเป็นวินาที</p>
         <div class="kz-sw">
           <div class="seg sm" id="kzTask" role="radiogroup" aria-label="งานที่วัด">
             <button type="button" role="radio" data-kt="find" aria-checked="${(sw ? sw.task : kzRun.task || 'find') === 'find'}">หางาน</button>
             <button type="button" role="radio" data-kt="add" aria-checked="${(sw ? sw.task : kzRun.task || 'find') === 'add'}">รับงานเข้า</button>
+            <button type="button" role="radio" data-kt="floor" aria-checked="${(sw ? sw.task : kzRun.task || 'find') === 'floor'}">หางานหน้างาน (หลัง)</button>
           </div>
           <button type="button" class="btn ${sw ? 'danger' : 'primary'} sm" id="kzSw">${sw ? '■ หยุด' : '▶ เริ่มจับเวลา'}</button>
           <b class="kz-clock" id="kzClock">${sw ? '…' : '0.0 วิ'}</b>
         </div>
-        <div class="kz-man"><input id="kzManual" type="number" min="1" step="0.1" placeholder="วินาที" /><input id="kzNote" placeholder="หมายเหตุ เช่น ชื่อคนวัด" /><button type="button" class="btn ghost sm" id="kzAddMan">+ เพิ่มค่า Before</button><button type="button" class="btn ghost sm" id="kzDelLast" ${kz.base.length ? '' : 'disabled'}>ลบค่าล่าสุด</button></div>
+        <div class="kz-man"><input id="kzManual" type="number" min="1" step="0.1" placeholder="วินาที" /><input id="kzNote" placeholder="หมายเหตุ เช่น ชื่อคนวัด" /><button type="button" class="btn ghost sm" id="kzAddMan">+ เพิ่มค่า</button><button type="button" class="btn ghost sm" id="kzDelLast" ${kzList(kzRun.task || 'find').length ? '' : 'disabled'}>ลบค่าล่าสุด</button><button type="button" class="btn ghost sm" id="kzMiss">✕ หาไม่เจอ</button></div>
       </div>
       <div class="kz-roi">
         <div class="sum-title">ROI · ผลประหยัด</div>
@@ -3264,8 +3321,8 @@ function kzStopwatch(){
   if (kzRun.stopwatch){
     const sw = kzRun.stopwatch, ms = performance.now() - sw.at;
     clearInterval(sw.timer); kzRun.stopwatch = null;
-    kz.base.push({ t: Date.now(), ms: Math.round(ms), task: sw.task, note: $('kzNote') ? $('kzNote').value.trim() : '' }); kzSave();
-    showToast('บันทึกค่า Before แล้ว', `${sw.task === 'find' ? 'หางาน' : 'รับงานเข้า'} ${secTxt(ms / 1000)}`);
+    kzList(sw.task).push({ t: Date.now(), ms: Math.round(ms), task: sw.task, note: $('kzNote') ? $('kzNote').value.trim() : '' }); kzSave();
+    showToast('บันทึกเวลาแล้ว', `${KZ_TASK[sw.task]} ${secTxt(ms / 1000)}`);
     renderKaizen(); return;
   }
   const task = kzRun.task || 'find';
@@ -3277,10 +3334,37 @@ function exportKaizen(){
     ...kz.base.map(b => ({ Time: fmtStamp(new Date(b.t).toISOString()), Type: 'Before', Task: b.task, Seconds: (b.ms / 1000).toFixed(1), Detail: b.note || '' })),
     ...kz.find.map(b => ({ Time: fmtStamp(new Date(b.t).toISOString()), Type: 'After', Task: 'find', Seconds: (b.ms / 1000).toFixed(1), Detail: b.via || '' })),
     ...kz.add.map(b => ({ Time: fmtStamp(new Date(b.t).toISOString()), Type: 'After', Task: 'add', Seconds: (b.ms / 1000).toFixed(1), Detail: '' })),
+    ...kz.floor.map(b => ({ Time: fmtStamp(new Date(b.t).toISOString()), Type: 'After', Task: 'floor', Seconds: (b.ms / 1000).toFixed(1), Detail: b.note || '' })),
+    ...kz.miss.map(b => ({ Time: fmtStamp(new Date(b.t).toISOString()), Type: 'Event', Task: 'notfound', Seconds: '', Detail: b.note || '' })),
     ...kz.blocks.map(b => ({ Time: fmtStamp(new Date(b.t).toISOString()), Type: 'Event', Task: b.kind, Seconds: '', Detail: b.detail })),
   ];
   downloadFile(`resonance_kaizen_${stamp()}.csv`, toCSV(['Time', 'Type', 'Task', 'Seconds', 'Detail'], rows));
   showToast('Export สำเร็จ', `${rows.length} รายการ`);
+}
+/* one row per week (Mon–Sun) from everything the system recorded: the follow-up table for the Kaizen verification page */
+function exportWeekly(){
+  const wkStart = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d.getTime(); };
+  const audits = readJSON('resHoldAuditV1', []), cycles = readJSON('resCycleV1', []);
+  const all = [kz.find, kz.floor, kz.miss, kz.blocks, audits, cycles].flat();
+  if (!all.length){ showToast('ยังไม่มีข้อมูล', 'ระบบยังไม่ได้บันทึกเวลา / เหตุการณ์ใด ๆ', 'warn'); return; }
+  const inWk = (list, w) => list.filter(x => x.t >= w && x.t < w + 7 * DAY);
+  const mean = l => l.length ? l.reduce((a, x) => a + x.ms, 0) / l.length / 1000 : null;
+  const rows = [];
+  for (let w = wkStart(Math.min(...all.map(x => x.t))), last = wkStart(Date.now()); w <= last; w += 7 * DAY){
+    const fd = inWk(kz.find, w), fl = inWk(kz.floor, w), bl = inWk(kz.blocks, w), au = inWk(audits, w), cc = inWk(cycles, w);
+    const fm = mean(fd), flm = mean(fl);
+    rows.push({
+      Week: `${new Date(w).toLocaleDateString('th-TH')} – ${new Date(w + 6 * DAY).toLocaleDateString('th-TH')}`,
+      FloorAvgMin: flm === null ? '' : (flm / 60).toFixed(1), FloorN: fl.length,
+      ScreenAvgSec: fm === null ? '' : fm.toFixed(1), ScreenN: fd.length,
+      NotFound: inWk(kz.miss, w).length,
+      HoldBlocked: bl.filter(b => b.kind === 'hold').length, ZoneBlocked: bl.filter(b => b.kind === 'zone').length, Over80Blocked: bl.filter(b => b.kind === 'over').length,
+      HoldAuditPct: au.length ? Math.round(au.filter(a => a.ok).length / au.length * 100) : '', HoldAuditN: au.length,
+      CycleAccPct: cc.length ? Math.round(cc.filter(c => c.counted === c.expected).length / cc.length * 100) : '', CycleN: cc.length,
+    });
+  }
+  downloadFile(`resonance_weekly_${stamp()}.csv`, toCSV(['Week', 'FloorAvgMin', 'FloorN', 'ScreenAvgSec', 'ScreenN', 'NotFound', 'HoldBlocked', 'ZoneBlocked', 'Over80Blocked', 'HoldAuditPct', 'HoldAuditN', 'CycleAccPct', 'CycleN'], rows));
+  showToast('Export ผลรายสัปดาห์', `${rows.length} สัปดาห์ · ข้อมูลจากระบบในเครื่องนี้`);
 }
 
 /* ===================== CYCLE COUNT (blind count of a few positions every shift) ===================== */
@@ -3736,6 +3820,30 @@ $('currentJobTable').addEventListener('change', e => {
     setDispose(k, sel.value);
     return;
   }
+  const je = e.target.closest('[data-jedit]');
+  if (je){
+    const k = je.dataset.jedit, f = je.dataset.f, v = je.value.trim();
+    if (holdData[k]){ holdBlock(k, 'แก้ข้อมูล Job'); renderJobsTable(); return; }
+    const row = store.find(r => normJob(r.JOB_NO) === k);
+    const d = jobs[k] ||= { 'Job No.': row ? row.JOB_NO : k };
+    if (v) d[f] = v; else delete d[f];
+    saveLocal(); touch();
+    if (f === 'Product'){ buildFilterBar(); buildJobFilterBar(); renderAll(); }
+    showToast('แก้ข้อมูล Job แล้ว', `${k} · ${f}: ${v || '(ว่าง)'}`);
+    return;
+  }
+  const jt = e.target.closest('[data-jtester]');
+  if (jt){
+    const k = jt.dataset.jtester, t = jt.value;
+    if (t === '*') return;
+    if (holdData[k]){ holdBlock(k, 'แก้ Tester'); renderJobsTable(); return; }
+    if (dirty){ showToast('มีการแก้ไขใน Data Entry ที่ยังไม่ได้บันทึก', 'กด "บันทึกการแก้ไข" ก่อน แล้วค่อยแก้ Tester', 'warn'); renderJobsTable(); return; }
+    store.forEach(r => { if (normJob(r.JOB_NO) !== k) return; r.TESTER = t; if (editor()) r.Last_Editor = editor(); });
+    logCtx = { src:'jobs' };
+    saveAll(false); renderAll();
+    showToast('แก้ Tester แล้ว', `${k} → ${t ? testerTxt(t) : 'ไม่ระบุ'} (ทุกแถวของ Job นี้)`);
+    return;
+  }
   const det = e.target.closest('[data-dispose-detail]');
   if (det){
     const k = det.dataset.disposeDetail;
@@ -3748,9 +3856,22 @@ $('currentJobTable').addEventListener('change', e => {
 $('entryTable').addEventListener('change', e => {
   const inp = e.target.closest('[data-col]'); if (!inp) return;
   const tr = inp.closest('tr[data-id]'); const r = store.find(x => x._id === tr.dataset.id); if (!r) return;
-  const c = inp.dataset.col;
+  const c = inp.dataset.col, old = r[c];
+  if (isHeld(r.JOB_NO)){ inp.value = old ?? ''; holdBlock(r.JOB_NO, 'แก้ไขใน Data Entry'); return; }
   r[c] = c === 'QUANITY' ? Math.max(0, num(inp.value)) : inp.value.trim();
   if (c === 'QUANITY') inp.value = r[c];
+  /* same 80-unit rule as the add form: a change that puts more than LIMIT in a position is refused */
+  if (c === 'QUANITY' || ['RACK','SIDE','FLOOR','CELL'].includes(c)){
+    const q = sumQty(positionRows(store, r.RACK, r.SIDE, r.FLOOR, String(r.CELL).toUpperCase()));
+    const added = c === 'QUANITY' ? num(r[c]) - num(old) : num(r.QUANITY);
+    if (q > LIMIT && added > 0){
+      const where = `${r.RACK}-${r.SIDE} L${r.FLOOR} ${r.CELL}`;
+      r[c] = old; inp.value = old ?? '';
+      kzBlock('over', where.replace(/ L| /g, '-'));
+      showToast('เกินกำหนด · ไม่ได้เปลี่ยน', `${where} จะมี ${q}/${LIMIT} units · ย้ายบางส่วนไปช่องอื่นก่อน`, 'error');
+      return;
+    }
+  }
   if (['RACK','SIDE','FLOOR','CELL'].includes(c)){
     r.STORE_LOCATION = autoLoc(r);
     tr.querySelector('[data-col="STORE_LOCATION"]').value = r.STORE_LOCATION;
@@ -3759,10 +3880,6 @@ $('entryTable').addEventListener('change', e => {
   }
   if (editor()){ r.Last_Editor = editor(); tr.querySelector('[data-col="Last_Editor"]').value = r.Last_Editor; }
   inp.closest('td').classList.add('changed');
-  if (c === 'QUANITY'){
-    const q = sumQty(positionRows(store, r.RACK, r.SIDE, r.FLOOR, String(r.CELL).toUpperCase()));
-    if (q > LIMIT) showToast('เกินกำหนด', `${r.RACK}-${r.SIDE} L${r.FLOOR} ${r.CELL} จะมี ${q}/${LIMIT} units`, 'warn');
-  }
   setDirty(true);
   if (['RACK','SIDE','CELL','ITEM','PRODUCT','TYPE'].includes(c)) buildFilterBar();
   renderDashboard();
@@ -3837,7 +3954,7 @@ $('zoneSave').addEventListener('click', () => {
   showToast('บันทึกผังโซนแล้ว', bad ? `มีงานผิดโซน ${bad} รายการ · ดูในแผง 🔒 แล้วย้ายให้ถูก` : 'ทุกงานอยู่ถูกโซน · พิมพ์ป้ายโซนใหม่ไปติดชั้น', bad ? 'warn' : '');
   renderZoneDialog(zones); renderAll(); updateAddForm();
 });
-$('zoneReset').addEventListener('click', () => { if (confirm('คืนค่าผังโซนแนะนำ? (ยังไม่บันทึกจนกด "บันทึกผังโซน")')) renderZoneDialog(JSON.parse(JSON.stringify(DEFAULT_ZONES))); });
+$('zoneReset').addEventListener('click', () => { if (confirm('คืนค่าผังโซนแนะนำ? (ยังไม่บันทึกจนกด "บันทึกผังโซน")')) renderZoneDialog(JSON.parse(JSON.stringify(RECOMMENDED_ZONES))); });
 $('zonePrint').addEventListener('click', async () => { try { await loadLib('qrcode.js', 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js', () => !!window.qrcode); } catch {} printZoneSigns(); });
 
 /* undo / redo */
@@ -3890,15 +4007,22 @@ $('flyBox').addEventListener('focus', kzFindStart);
 /* insights: kaizen, cycle count, owner mails, weekly report */
 $('weeklyBtn').addEventListener('click', weeklyReport);
 $('kzExport').addEventListener('click', exportKaizen);
+$('kzWeekly').addEventListener('click', exportWeekly);
 $('kzBody').addEventListener('click', e => {
   const t = e.target.closest('[data-kt]'); if (t && !kzRun.stopwatch){ kzRun.task = t.dataset.kt; renderKaizen(); return; }
   if (e.target.closest('#kzSw')){ kzStopwatch(); return; }
+  const task = kzRun.task || 'find';
   if (e.target.closest('#kzAddMan')){
     const s = Number($('kzManual').value); if (!(s > 0)){ showToast('ใส่เวลาเป็นวินาที', '', 'warn'); return; }
-    kz.base.push({ t: Date.now(), ms: Math.round(s * 1000), task: kzRun.task || 'find', note: $('kzNote').value.trim() }); kzSave();
-    showToast('เพิ่มค่า Before แล้ว', `${(kzRun.task || 'find') === 'find' ? 'หางาน' : 'รับงานเข้า'} ${secTxt(s)}`); renderKaizen(); return;
+    kzList(task).push({ t: Date.now(), ms: Math.round(s * 1000), task, note: $('kzNote').value.trim() }); kzSave();
+    showToast('เพิ่มค่าแล้ว', `${KZ_TASK[task]} ${secTxt(s)}`); renderKaizen(); return;
   }
-  if (e.target.closest('#kzDelLast')){ if (kz.base.length && confirm('ลบค่า Before ล่าสุด?')){ kz.base.pop(); kzSave(); renderKaizen(); } }
+  if (e.target.closest('#kzDelLast')){ const l = kzList(task); if (l.length && confirm(`ลบค่าล่าสุดของ ${KZ_TASK[task]}?`)){ l.pop(); kzSave(); renderKaizen(); } return; }
+  if (e.target.closest('#kzMiss')){
+    const note = prompt('หาไม่เจอ: Job No. / หมายเหตุ (ไม่บังคับ)'); if (note === null) return;
+    kz.miss.push({ t: Date.now(), note: note.trim(), ed: editor() }); kzSave();
+    showToast('บันทึก "หาไม่เจอ" แล้ว', note.trim() || '', 'warn'); renderKaizen();
+  }
 });
 $('kzBody').addEventListener('change', e => { const i = e.target.closest('[data-kset]'); if (!i) return; kz.set[i.dataset.kset] = i.value; kzSave(); renderKaizen(); });
 $('ccBody').addEventListener('click', e => {
@@ -3925,7 +4049,11 @@ window.addEventListener('storage', e => {
   zones = readJSON('resZoneV1', null) || zones;
   Object.assign(kz, readJSON('resKaizenV1', {}));
   Object.assign(ownerMail, readJSON('resOwnerEmailV1', {}));
-  if (!dirty) store = (readJSON('resStoreV7', []) || []).map(normRow);
+  const saved = (readJSON('resStoreV7', []) || []).map(normRow);
+  /* unsaved edits here: keep them and add the other PC's changes, so saving does not wipe what it saved */
+  store = !dirty ? saved : window.RS_SYNC ? RS_SYNC.merge(storeSeen, store, saved).map(normRow) : store;
+  storeSeen = structuredClone(saved);
+  undo.last = structuredClone(saved);   /* the next save's undo step then holds only this PC's change */
   lastUpdated = localStorage.getItem('lastUpdatedV7') || lastUpdated; $('lastUpdated').textContent = fmtStamp(lastUpdated);
   buildFilterBar(); buildJobFilterBar(); renderAll();
 });

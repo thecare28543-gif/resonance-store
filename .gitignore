@@ -13,3 +13,11 @@ data/
 
 # training manual PDF: screenshots contain real lab job numbers; copy it in at deployment
 app/training-manual.pdf
+
+# Node packages: run "npm install" in app/ after cloning
+node_modules/
+
+# test data folders and this-PC-only setup files
+app/data_*/
+app/db/_*
+app/deploy/run-server.vbs

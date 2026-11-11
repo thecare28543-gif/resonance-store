@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>บัญชีผู้ใช้ · Resonance Store</title>
+<script>try { if (localStorage.getItem('resThemeV1') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch {}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+  /* shell, sidebar, top bar, panels, KPI tiles, tables and buttons come from styles.css (same as the app) */
+  .us-grid{display:flex;flex-direction:column;gap:18px}
+  .us-stack{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:stretch}
+  .us-stack>.panel{display:flex;flex-direction:column}
+  .us-addrow{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+  .us-addrow3{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:10px}
+  .panel h3 .ico{width:26px;height:26px;border-radius:8px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;flex:none}
+  .panel h3 .ico svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  .panel h3 em{margin-left:auto;font-style:normal;font-weight:500;font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--muted)}
+  .us-body{padding:16px 20px 20px}
+  .us-hint{margin:0 0 12px;color:var(--muted);font-size:13px;line-height:1.55}
+  .us-hint b{color:var(--ink)}
+  .us-f{display:block;margin-bottom:12px}
+  .us-f>span{display:block;font-size:12.5px;font-weight:700;margin-bottom:6px}
+  .us-f input,.us-f select,.us-tools input,.us-tools select{width:100%;min-height:44px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);padding:8px 12px;font-size:14.5px;color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+  .us-f input:focus,.us-f select:focus,.us-tools input:focus,.us-tools select:focus{border-color:var(--brand);background:var(--surface);box-shadow:0 0 0 4px var(--brand-soft)}
+  .us-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .us-body .btn{min-height:44px;border-radius:12px;justify-content:center}
+  .us-full{width:100%}
+  .us-drop{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 12px;border:1.5px dashed var(--line);border-radius:14px;background:var(--surface-2);text-align:center;color:var(--muted);font-size:13px;cursor:pointer;transition:border-color .15s,background .15s}
+  .us-drop:hover{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-strong)}
+  .us-drop b{color:var(--ink);font-size:14px}
+  .us-drop svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .us-tools{display:flex;gap:10px;flex-wrap:wrap;padding:14px 20px 0}
+  .us-tools .s{flex:1;min-width:200px;position:relative}
+  .us-tools .s svg{position:absolute;left:12px;top:13px;width:18px;height:18px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round}
+  .us-tools .s input{padding-left:38px}
+  .us-tools select{width:auto}
+  .us-tablewrap{padding:12px 20px 20px;overflow:auto}
+  .us-tablewrap td{white-space:nowrap}
+  .us-tablewrap td input,.us-tablewrap td select{min-width:0}
+  .us-tablewrap td input.nm{width:200px}.us-tablewrap td input.dp{width:150px}.us-tablewrap td select{width:auto}
+  tr.off td{opacity:.5}
+  .us-av{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--brand-soft);color:var(--brand-strong);font-weight:800;font-size:12px;margin-right:8px;vertical-align:middle}
+  .us-pill{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+  .us-pill i{width:7px;height:7px;border-radius:50%;background:currentColor}
+  .us-pill.on{background:var(--brand-soft);color:var(--brand-strong)}
+  .us-pill.off{background:var(--surface-2);color:var(--muted)}
+  .us-pill.lock{background:var(--danger-soft);color:var(--danger-strong)}
+  .us-role{font-weight:700}
+  .us-role.admin{color:#7B3FB5}.us-role.viewer{color:var(--muted)}
+  :root[data-theme="dark"] .us-role.admin{color:#C69BF0}
+  .us-me{display:flex;align-items:center;gap:10px;min-height:44px;padding:4px 14px 4px 6px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:13.5px;white-space:nowrap}
+  .us-me small{color:var(--muted);font-weight:600}
+  .us-rights td,.us-rights th{white-space:normal}.us-rights td:not(:first-child),.us-rights th:not(:first-child){text-align:center;width:90px}
+  .us-yes{color:var(--brand-strong);font-weight:800}.us-no{color:var(--muted)}
+  .us-ok{color:var(--brand-strong);font-weight:700}.us-bad{color:var(--danger-strong);font-weight:700}
+  .muted{color:var(--muted)}
+  .us-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(8px);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;max-width:90vw;z-index:100;box-shadow:var(--shadow)}
+  .us-toast.show{opacity:1;transform:translateX(-50%)}
+  .lg-nav button{cursor:pointer}
+  #kpis{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .us-tablewrap td input.nm{width:min(260px,100%)}
+  @media (max-width:1180px){ .us-stack{grid-template-columns:1fr} #kpis{grid-template-columns:repeat(3,minmax(0,1fr))} }
+  @media (max-width:600px){ .us-addrow,.us-addrow3{grid-template-columns:1fr} }
+  @media (max-width:900px){
+    .shell{grid-template-columns:1fr}
+    .shell>.sidebar{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px;border-right:0;border-bottom:1px solid var(--line)}
+    .shell>.sidebar .tabs{flex-direction:row;flex-wrap:wrap}
+    .shell>.sidebar .tabs button{min-height:40px;font-size:13.5px;width:auto}
+    .shell>.sidebar .tabs button.on::before{display:none}
+    .shell>.sidebar .side-foot{display:none}
+    .us-hide-sm{display:none!important}
+    .app{padding:16px}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" aria-label="เมนูบัญชีผู้ใช้">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="brand-text"><h1>Resonance Store</h1><p>HSA Resonance Lab</p></div>
+    </div>
+    <nav class="tabs" id="tabs" role="tablist" aria-orientation="vertical">
+      <button type="button" role="tab" class="on" data-pane="users" aria-selected="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14c2.2.6 3.5 2.8 3.5 6"/></svg><span>บัญชีผู้ใช้</span><span class="tab-count" id="cntUsers"></span></button>
+      <button type="button" role="tab" data-pane="rights" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg><span>สิทธิ์การใช้งาน</span></button>
+      <button type="button" role="tab" data-pane="log" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>ประวัติเข้าระบบ</span></button>
+    </nav>
+    <div class="side-foot">
+      <a class="side-btn" href="/" style="text-decoration:none"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>กลับไป Store</span></a>
+      <button class="side-btn" type="button" id="logout"><svg viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10"/></svg><span>ออกจากระบบ</span></button>
+    </div>
+  </aside>
+
+  <div class="main-col">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="page-title"><h2 id="pageTitle">บัญชีผู้ใช้</h2><span id="pageSub">ใครเข้าเว็บ Resonance Store ได้บ้าง · เพิ่ม / แก้สิทธิ์ / ปิดบัญชี</span></div>
+        <div class="top-meta">
+          <a class="btn ghost us-hide-sm" href="/" style="min-height:44px;border-radius:12px;text-decoration:none">← กลับไป Store</a>
+          <div class="us-me" id="me"></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="app">
+      <section class="kpis" id="kpis" aria-label="สรุปผู้ใช้"></section>
+
+      <!-- ===== users ===== -->
+      <div class="us-grid" id="pane-users">
+        <div class="us-stack">
+          <section class="panel">
+            <h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>เพิ่มผู้ใช้<em>ทีละคน</em></h3>
+            <form id="fAdd" class="us-body" autocomplete="off">
+              <p class="us-hint">ผู้ใช้เข้าระบบด้วย <b>GID / GID</b> (User และ Password เป็นเลข GID ของตัวเอง) ไม่ต้องแจกรหัส</p>
+              <div class="us-addrow">
+                <label class="us-f"><span>GID พนักงาน</span><input id="aGid" required maxlength="20" inputmode="numeric" spellcheck="false" placeholder="เช่น 123456"></label>
+                <label class="us-f"><span>ชื่อ-นามสกุล</span><input id="aName" required maxlength="120" placeholder="เช่น Somchai Jaidee"></label>
+              </div>
+              <div class="us-addrow3">
+                <label class="us-f"><span>สิทธิ์</span><select id="aRole"><option value="user">User</option><option value="viewer">Viewer</option><option value="admin">Admin</option></select></label>
+                <label class="us-f"><span>กะ</span><select id="aCrew"><option value="">-</option><option>A</option><option>B</option><option>C</option></select></label>
+                <label class="us-f"><span>แผนก <small class="muted">(ไม่บังคับ)</small></span><input id="aDept" maxlength="80" placeholder="เช่น HSA Resonance"></label>
+              </div>
+              <button class="btn primary us-full" type="submit">เพิ่มผู้ใช้</button>
+            </form>
+          </section>
+
+          <section class="panel">
+            <h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg></span>นำเข้ารายชื่อ<em>Excel / CSV</em></h3>
+            <div class="us-body">
+              <p class="us-hint">คอลัมน์ <b>GID</b>, <b>ชื่อ</b> (Name / User Name) · ไม่บังคับ: สิทธิ์ (Role), กะ (Crew), แผนก (Department)<br>GID ใหม่ = เพิ่ม · GID ที่มีแล้ว = อัปเดตชื่อ / กะ / สิทธิ์</p>
+              <label class="us-drop" for="impFile"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14h6M9 17h4"/></svg><b>เลือกไฟล์รายชื่อ</b><span id="impName">.xlsx · .xls · .csv</span></label>
+              <input type="file" id="impFile" accept=".xlsx,.xls,.csv">
+              <div id="impPreview"></div>
+              <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+                <button class="btn primary" type="button" id="impGo" hidden>นำเข้า</button>
+                <button class="btn ghost" type="button" id="tplBtn">⬇ ไฟล์ตัวอย่าง</button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel">
+          <h3><span class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/></svg></span>รายชื่อผู้ใช้<em>แก้ชื่อ / สิทธิ์ / กะ ในตารางได้เลย</em></h3>
+          <div class="us-tools">
+            <div class="s"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="search" placeholder="ค้นหา GID / ชื่อ / กะ"></div>
+            <select id="fRole" aria-label="กรองสิทธิ์"><option value="">ทุกสิทธิ์</option><option value="admin">Admin</option><option value="user">User</option><option value="viewer">Viewer</option></select>
+            <select id="fActive" aria-label="กรองสถานะ"><option value="1">ใช้งานอยู่</option><option value="">ทั้งหมด</option><option value="0">ปิดแล้ว</option></select>
+            <button class="btn ghost" type="button" id="csvUsers" style="min-height:44px;border-radius:12px">⬇ CSV</button>
+          </div>
+          <div class="us-tablewrap"><table><thead><tr><th>GID</th><th>ชื่อ-นามสกุล</th><th>สิทธิ์</th><th>กะ</th><th>แผนก</th><th>สถานะ</th><th>เข้าล่าสุด</th><th></th></tr></thead><tbody id="uBody"></tbody></table></div>
+          <p class="us-hint" style="padding:0 20px 18px;margin:0">เปลี่ยนสิทธิ์หรือปิดบัญชี ผู้ใช้นั้นต้องล็อกอินใหม่ · ปิดบัญชีแทนการลบ เพื่อให้ประวัติว่าใครแก้อะไรยังอยู่ · ต้องมีแอดมินอย่างน้อย 1 คนเสมอ</p>
+        </section>
+      </div>
+
+      <!-- ===== rights ===== -->
+      <section class="panel" id="pane-rights" hidden>
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6z"/></svg></span>สิทธิ์แต่ละระดับ<em>ใครทำอะไรได้</em></h3>
+        <div class="us-tablewrap"><table class="us-rights"><thead><tr><th>งาน</th><th>Admin</th><th>User</th><th>Viewer</th></tr></thead><tbody>
+          <tr><td>ดูผัง 3D / 2D, ค้นหางาน, ดูรายงาน</td><td class="us-yes">✔</td><td class="us-yes">✔</td><td class="us-yes">✔</td></tr>
+          <tr><td>รับงานเข้า / หยิบงานออก / ย้ายตำแหน่ง</td><td class="us-yes">✔</td><td class="us-yes">✔</td><td class="us-no">—</td></tr>
+          <tr><td>ติด Hold / ปลด Hold (ปลดต้องมีผู้อนุมัติ)</td><td class="us-yes">✔</td><td class="us-yes">✔</td><td class="us-no">—</td></tr>
+          <tr><td>นำเข้าไฟล์ Store / Job Detail, แก้ Data Entry</td><td class="us-yes">✔</td><td class="us-yes">✔</td><td class="us-no">—</td></tr>
+          <tr><td>กด Backup ตอนนี้</td><td class="us-yes">✔</td><td class="us-yes">✔</td><td class="us-no">—</td></tr>
+          <tr><td>ดาวน์โหลด Backup</td><td class="us-yes">✔</td><td class="us-yes">✔</td><td class="us-yes">✔</td></tr>
+          <tr><td>กู้คืนข้อมูลจาก Backup</td><td class="us-yes">✔</td><td class="us-no">—</td><td class="us-no">—</td></tr>
+          <tr><td>บัญชีผู้ใช้: เพิ่ม / ปิด / เปลี่ยนสิทธิ์ / ปลดล็อก</td><td class="us-yes">✔</td><td class="us-no">—</td><td class="us-no">—</td></tr>
+        </tbody></table></div>
+        <p class="us-hint" style="padding:0 20px 18px;margin:0">เข้าระบบด้วย GID / GID · ชื่อผู้แก้ไข (Last_Editor) ใช้ชื่อของคนที่ล็อกอิน · อยู่ได้ 12 ชั่วโมง (1 กะ) · ใส่ผิด 5 ครั้ง บัญชีล็อก 15 นาที (แอดมินกด 🔓 ปลดล็อกได้) · ใช้เครื่องร่วมกัน กดออกจากระบบทุกครั้งก่อนเปลี่ยนคน</p>
+      </section>
+
+      <!-- ===== log ===== -->
+      <section class="panel" id="pane-log" hidden>
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span>ประวัติเข้าระบบ<em>200 ครั้งล่าสุด</em></h3>
+        <div class="us-tablewrap"><table><thead><tr><th>เวลา</th><th>GID</th><th>ชื่อ</th><th>ผล</th><th>หมายเหตุ</th><th>IP</th></tr></thead><tbody id="lBody"></tbody></table></div>
+      </section>
+    </main>
+  </div>
+</div>
+<div class="us-toast" id="toast" role="status"></div>
+<script src="lib/xlsx.full.min.js"></script>
+<script>
+(function(){
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  const when = iso => iso ? new Date(iso).toLocaleString('en-GB', { day:'2-digit', month:'short', year:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—';
+  const ROLE_TXT = { admin: 'Admin', user: 'User', viewer: 'Viewer' };
+  const REASON_TXT = { ok: 'เข้าระบบ', setup: 'ตั้งค่าครั้งแรก', logout: 'ออกจากระบบ', 'wrong password': 'รหัสผิด', 'unknown gid': 'ไม่มี GID นี้', locked: 'บัญชีล็อก', inactive: 'บัญชีถูกปิด' };
+  const initials = name => String(name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  let users = [], me = null, pendingImport = [];
+
+  function api(method, url, body){
+    return fetch('/api/' + url, { method, credentials: 'same-origin', cache: 'no-store',
+      headers: Object.assign({ 'X-Requested-With': 'rs' }, body ? { 'Content-Type': 'application/json' } : {}), body: body ? JSON.stringify(body) : undefined })
+      .then(async r => {
+        const j = await r.json().catch(() => ({}));
+        if (r.status === 401){ location.href = '/login.html?next=/users.html'; throw new Error('login'); }
+        if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+        return j;
+      });
+  }
+  let tt = 0;
+  const toast = msg => { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 3200); };
+  const fail = e => { if (e.message !== 'login') toast('⚠ ' + e.message); };
+
+  /* ---------- users table ---------- */
+  function kpis(){
+    const on = users.filter(u => u.active);
+    const k = [['ผู้ใช้ทั้งหมด', users.length, 'บัญชีในระบบ', 'accent'], ['ใช้งานอยู่', on.length, 'เข้าระบบได้'], ['Admin', on.filter(u => u.role === 'admin').length, 'จัดการผู้ใช้'],
+      ['User', on.filter(u => u.role === 'user').length, 'ทำงาน Store'], ['Viewer', on.filter(u => u.role === 'viewer').length, 'ดูอย่างเดียว'],
+      ['ถูกล็อก', users.filter(u => u.locked).length, 'ใส่ผิด 5 ครั้ง', users.some(u => u.locked) ? 'bad' : '']];
+    $('kpis').innerHTML = k.map(([l, v, s, c]) => `<div class="kpi ${c || ''}"><span>${l}</span><b>${v}</b><small>${s}</small></div>`).join('');
+    $('cntUsers').textContent = on.length || '';
+  }
+  function render(){
+    kpis();
+    const s = $('search').value.trim().toLowerCase(), role = $('fRole').value, act = $('fActive').value;
+    const list = users.filter(u => (!role || u.role === role) && (act === '' || String(+u.active) === act)
+      && (!s || [u.gid, u.name, u.crew, u.department].some(v => String(v || '').toLowerCase().includes(s))));
+    $('uBody').innerHTML = list.map(u => {
+      const self = me && u.gid === me.gid;
+      return `<tr class="${u.active ? '' : 'off'}" data-gid="${esc(u.gid)}">
+        <td><span class="us-av">${esc(initials(u.name))}</span><b>${esc(u.gid)}</b>${self ? ' <span class="muted">(คุณ)</span>' : ''}</td>
+        <td><input class="nm" data-f="name" value="${esc(u.name)}" maxlength="120" aria-label="ชื่อ ${esc(u.gid)}"></td>
+        <td><select class="us-role ${u.role}" data-f="role" ${self ? 'disabled title="เปลี่ยนสิทธิ์ตัวเองไม่ได้"' : ''} aria-label="สิทธิ์">${['admin', 'user', 'viewer'].map(r => `<option value="${r}" ${u.role === r ? 'selected' : ''}>${ROLE_TXT[r]}</option>`).join('')}</select></td>
+        <td><select data-f="crew" aria-label="กะ">${['', 'A', 'B', 'C'].map(c => `<option value="${c}" ${String(u.crew || '') === c ? 'selected' : ''}>${c || '-'}</option>`).join('')}</select></td>
+        <td><input class="dp" data-f="department" value="${esc(u.department || '')}" maxlength="80" placeholder="-" aria-label="แผนก"></td>
+        <td>${u.locked ? '<span class="us-pill lock"><i></i>ล็อก</span>' : u.active ? '<span class="us-pill on"><i></i>ใช้งาน</span>' : '<span class="us-pill off"><i></i>ปิดแล้ว</span>'}</td>
+        <td class="muted">${when(u.lastLogin)}</td>
+        <td style="text-align:right">${u.locked ? '<button class="btn soft sm" type="button" data-act="reset">🔓 ปลดล็อก</button> ' : ''}${self ? '' : `<button class="btn ${u.active ? 'ghost' : 'outline'} sm" type="button" data-act="toggle">${u.active ? 'ปิดบัญชี' : 'เปิดบัญชี'}</button>`}</td></tr>`;
+    }).join('') || '<tr><td colspan="8" class="muted">ไม่พบผู้ใช้</td></tr>';
+  }
+  const load = () => api('GET', 'users').then(j => { users = j; render(); }).catch(fail);
+
+  $('uBody').addEventListener('change', e => {
+    const el = e.target.closest('[data-f]'); if (!el) return;
+    const gid = el.closest('tr').dataset.gid;
+    api('PUT', 'users/' + encodeURIComponent(gid), { [el.dataset.f]: el.value })
+      .then(u => { users = users.map(x => x.gid === gid ? u : x); render(); toast(`บันทึก ${gid} แล้ว`); })
+      .catch(err => { fail(err); load(); });
+  });
+  $('uBody').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const gid = b.closest('tr').dataset.gid, u = users.find(x => x.gid === gid);
+    if (b.dataset.act === 'reset') api('POST', `users/${encodeURIComponent(gid)}/reset`).then(() => { load(); toast(`ปลดล็อก ${gid} แล้ว · เข้าด้วย GID / GID ได้เลย`); }).catch(fail);
+    if (b.dataset.act === 'toggle'){
+      if (u.active && !confirm(`ปิดบัญชี ${gid} · ${u.name} ?\nเข้าระบบไม่ได้อีก (ประวัติยังเก็บไว้ · เปิดคืนได้)`)) return;
+      api('PUT', 'users/' + encodeURIComponent(gid), { active: !u.active }).then(() => { load(); toast(u.active ? `ปิดบัญชี ${gid} แล้ว` : `เปิดบัญชี ${gid} แล้ว`); }).catch(fail);
+    }
+  });
+  ['search', 'fRole', 'fActive'].forEach(id => $(id).addEventListener('input', render));
+
+  /* ---------- add one ---------- */
+  $('aGid').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().trim(); });
+  $('fAdd').addEventListener('submit', e => {
+    e.preventDefault();
+    const body = { gid: $('aGid').value.trim(), name: $('aName').value.trim(), role: $('aRole').value, crew: $('aCrew').value, department: $('aDept').value.trim() };
+    api('POST', 'users', body).then(j => { e.target.reset(); load(); toast(`เพิ่ม ${j.gid} แล้ว · เข้าระบบด้วย ${j.gid} / ${j.gid}`); }).catch(fail);
+  });
+
+  /* ---------- import ---------- */
+  const pick = (r, names) => { for (const k of Object.keys(r)){ const n = k.trim().toLowerCase().replace(/[\s_.-]+/g, ''); if (names.includes(n)) return String(r[k] ?? '').trim(); } return undefined; };
+  function rowsToUsers(rows){
+    return rows.map(r => ({
+      gid: pick(r, ['gid', 'empid', 'employeeid', 'รหัสพนักงาน', 'id']),
+      name: pick(r, ['name', 'fullname', 'username', 'employeename', 'ชื่อ', 'ชื่อนามสกุล', 'ชื่อสกุล']),
+      role: (pick(r, ['role', 'สิทธิ์', 'สิทธิ']) || '').toLowerCase() || undefined,
+      crew: pick(r, ['crew', 'shift', 'กะ']),
+      department: pick(r, ['department', 'dept', 'แผนก', 'หน้าที่']),
+    })).filter(u => u.gid);
+  }
+  $('impFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    $('impName').textContent = f.name;
+    try {
+      const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '', raw: false });
+      pendingImport = rowsToUsers(rows);
+      const known = new Set(users.map(u => u.gid));
+      $('impPreview').innerHTML = pendingImport.length
+        ? `<p class="us-hint" style="margin:12px 0 6px">พบ <b>${pendingImport.length}</b> คน · ใหม่ ${pendingImport.filter(u => !known.has(u.gid.toUpperCase())).length} · มีอยู่แล้ว ${pendingImport.filter(u => known.has(u.gid.toUpperCase())).length}</p>
+           <div style="max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:12px"><table><thead><tr><th>GID</th><th>ชื่อ</th><th>สิทธิ์</th></tr></thead><tbody>
+           ${pendingImport.slice(0, 200).map(u => `<tr><td>${esc(u.gid)}</td><td>${esc(u.name || '')}</td><td>${esc(u.role || 'user')}</td></tr>`).join('')}</tbody></table></div>`
+        : '<p class="us-bad" style="margin-top:10px">ไม่พบคอลัมน์ GID ในไฟล์</p>';
+      $('impGo').hidden = !pendingImport.length;
+    } catch (err){ toast('อ่านไฟล์ไม่ได้: ' + err.message); }
+  });
+  $('impGo').addEventListener('click', () => {
+    if (!confirm(`นำเข้า ${pendingImport.length} คน ?`)) return;
+    api('POST', 'users/import', { users: pendingImport }).then(r => {
+      toast(`เพิ่ม ${r.added.length} · อัปเดต ${r.updated.length} · ข้าม ${r.skipped.length} · ทุกคนเข้าด้วย GID / GID`);
+      if (r.skipped.length) alert('ข้าม:\n' + r.skipped.map(s => `${s.gid}: ${s.why}`).join('\n'));
+      pendingImport = []; $('impPreview').innerHTML = ''; $('impGo').hidden = true; $('impFile').value = ''; $('impName').textContent = '.xlsx · .xls · .csv'; load();
+    }).catch(fail);
+  });
+  function download(text, name){
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' })); a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  $('tplBtn').addEventListener('click', () => download('﻿GID,User Name,Role,Crew,Department\n123456,Somchai Jaidee,admin,,HSA Resonance\n234567,Somying Rakngan,user,A,HSA Resonance\n', 'users-template.csv'));
+  $('csvUsers').addEventListener('click', () => download('﻿GID,Name,Role,Crew,Department,Active,LastLogin\n' +
+    users.map(u => [u.gid, u.name, u.role, u.crew || '', u.department || '', u.active ? 'yes' : 'no', u.lastLogin || ''].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n'), 'resonance-users.csv'));
+
+  /* ---------- sidebar tabs + log ---------- */
+  const TITLES = { users: ['บัญชีผู้ใช้', 'ใครเข้าเว็บ Resonance Store ได้บ้าง · เพิ่ม / แก้สิทธิ์ / ปิดบัญชี'], rights: ['สิทธิ์การใช้งาน', 'Admin · User · Viewer ทำอะไรได้บ้าง'], log: ['ประวัติเข้าระบบ', 'เข้า / ออก / ใส่ผิด · 200 ครั้งล่าสุด'] };
+  $('tabs').addEventListener('click', e => {
+    const b = e.target.closest('[data-pane]'); if (!b) return;
+    const pane = b.dataset.pane;
+    document.querySelectorAll('#tabs button').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b); });
+    ['users', 'rights', 'log'].forEach(p => { $('pane-' + p).hidden = p !== pane; });
+    $('kpis').hidden = pane !== 'users';
+    $('pageTitle').textContent = TITLES[pane][0]; $('pageSub').textContent = TITLES[pane][1];
+    if (pane === 'log') api('GET', 'login-log?limit=200').then(rows => {
+      $('lBody').innerHTML = rows.map(r => `<tr><td>${when(r.at)}</td><td><b>${esc(r.gid || '-')}</b></td><td>${esc(r.name || '')}</td><td>${r.ok ? '<span class="us-pill on"><i></i>สำเร็จ</span>' : '<span class="us-pill lock"><i></i>ไม่สำเร็จ</span>'}</td><td>${esc(REASON_TXT[r.reason] || r.reason || '')}</td><td class="muted">${esc(r.ip || '')}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">ยังไม่มีประวัติ</td></tr>';
+    }).catch(fail);
+  });
+
+  $('logout').addEventListener('click', () => api('POST', 'auth/logout').catch(() => {}).then(() => { location.href = '/login.html'; }));
+  api('GET', 'auth/me').then(j => {
+    me = j.user;
+    $('me').innerHTML = `<span class="us-av" style="margin:0">${esc(initials(me.name))}</span><span><b>${esc(me.name)}</b><br><small>GID ${esc(me.gid)} · ${ROLE_TXT[me.role]}</small></span>`;
+    load();
+  }).catch(fail);
+})();
+</script>
+</body>
+</html>

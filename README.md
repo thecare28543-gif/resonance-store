@@ -10,9 +10,11 @@ Web app for the HSA Resonance lab store (Seagate Korat): where every tested job 
 
 | Path | What it is |
 |---|---|
-| `app/` | The whole web app. Plain HTML + JavaScript + CSS, **no build step, no npm packages**. Edit a file, reload the page. |
+| `app/` | The whole web app. Plain HTML + JavaScript + CSS, **no build step**. Edit a file, reload the page. The server needs one npm package (`pg`): run `npm install` in `app/` once. |
+| `app/login.html` · `app/users.html` | Log-in window (user name = GID, password = GID) and the admin page for user accounts (add, import from Excel/CSV, roles admin / user / viewer, unlock, log-in history). |
+| `app/db/` | PostgreSQL: `schema.sql` (all tables + views), `01_create_user_and_db.sql`, and the Thai setup guide `วิธีตั้งค่าฐานข้อมูล.md`. |
 | `app/lib/` | Third-party libraries, kept locally so the lab PCs need no internet (three.js r128, OrbitControls, SheetJS xlsx, qrcode, jsQR). |
-| `app/server.js` | Small Node.js 18+ server: serves the app, keeps one shared copy of the data for every PC, takes automatic backups. |
+| `app/server.js` | Node.js 18+ server: log-in and roles, serves the app only to logged-in users, keeps one shared copy of the data for every PC in **PostgreSQL**, takes automatic backups (table `rs_backups`). Settings in `server-config.json` (copy from `server-config.example.json`; never commit the real database password). |
 | `app/deploy/` | Windows scripts: `1-check` (is this PC ready), `2-install-autostart` (Task Scheduler + firewall), `3-status` (running? last backup?), `uninstall-autostart`. |
 | `วิธีติดตั้ง_server_เอง.md` | Step-by-step install guide in Thai for the lab, plus a ready-to-send request to IT. |
 | `docs/` | Developer documentation (start with `ARCHITECTURE.md`). |

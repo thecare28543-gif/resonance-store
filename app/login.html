@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>เข้าสู่ระบบ · Resonance Store</title>
+<script>try { if (localStorage.getItem('resThemeV1') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch {}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+  /* the log-in window over a decorative 3D store (no real data); colours, logo, panel and button come from styles.css */
+  body{min-height:100vh;overflow:hidden;
+    /* studio backdrop: soft light from the top right, the floor fades into it */
+    background:radial-gradient(90% 80% at 72% 18%,color-mix(in srgb,var(--surface) 92%,var(--brand) 8%) 0%,var(--bg) 55%,color-mix(in srgb,var(--bg) 88%,#000 12%) 100%)}
+  :root[data-theme="dark"] body{background:radial-gradient(90% 80% at 72% 18%,#18241d 0%,#0c110f 55%,#070a09 100%)}
+  #scene{position:fixed;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity 1.2s ease}
+  #scene.on{opacity:1}
+  .lg-veil{position:fixed;inset:0;pointer-events:none;
+    background:linear-gradient(90deg,var(--bg) 0%,color-mix(in srgb,var(--bg) 85%,transparent) 34%,transparent 62%),
+               radial-gradient(140% 120% at 60% 50%,transparent 55%,color-mix(in srgb,var(--bg) 70%,#000 30%) 140%)}
+  .lg-body{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:flex-start;padding:24px max(16px,7vw)}
+  .lg-col{width:100%;max-width:480px;display:flex;flex-direction:column;gap:12px;animation:lgIn .7s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes lgIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .lg-col .panel{position:relative;overflow:hidden;border-radius:22px;
+    background:color-mix(in srgb,var(--surface) 96%,transparent);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4);
+    border:1px solid var(--line);
+    box-shadow:inset 0 1px 0 color-mix(in srgb,#fff 60%,transparent),0 1px 2px rgba(0,0,0,.05),0 30px 80px -30px rgba(16,24,20,.45)}
+  :root[data-theme="dark"] .lg-col .panel{box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 30px 80px -30px rgba(0,0,0,.8)}
+  /* thin brand line on top of the card */
+  .lg-col .panel::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:linear-gradient(90deg,var(--brand-strong),var(--brand) 55%,var(--warn))}
+  .lg-head{display:flex;align-items:center;gap:16px;padding:36px 34px 8px}
+  .lg-head .logo{width:58px;height:58px;border-radius:16px;padding:11px 9px;gap:4px}.lg-head .logo span{width:7px}
+  .lg-head h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+  .lg-head p{margin:3px 0 0;color:var(--muted);font-size:15.5px;font-weight:600}
+  .lg-form{padding:24px 34px 36px}
+  .lg-field{display:block;margin-bottom:18px}
+  .lg-field>span{display:block;font-size:15px;font-weight:700;margin-bottom:8px}
+  .lg-in{position:relative;display:flex;align-items:center}
+  .lg-in>svg{position:absolute;left:17px;width:22px;height:22px;fill:none;stroke:var(--muted);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+  .lg-in input{width:100%;min-height:60px;padding:12px 16px 12px 52px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface-2);font-size:19px;font-weight:600;letter-spacing:.04em;transition:border-color .15s,box-shadow .15s,background .15s}
+  .lg-in input::placeholder{font-weight:500;letter-spacing:0;color:var(--muted);opacity:.8}
+  .lg-in input:focus{outline:none;border-color:var(--brand);background:var(--surface);box-shadow:0 0 0 4px var(--brand-soft)}
+  .lg-form .btn.primary{width:100%;justify-content:center;min-height:60px;font-size:18px;font-weight:700;border-radius:14px;margin-top:8px;
+    background:linear-gradient(180deg,color-mix(in srgb,var(--brand) 88%,#fff 12%),var(--brand));box-shadow:0 10px 24px -10px color-mix(in srgb,var(--brand) 80%,transparent),inset 0 1px 0 rgba(255,255,255,.25)}
+  .lg-form .btn.primary:hover{background:linear-gradient(180deg,var(--brand),var(--brand-strong))}
+  .lg-form .btn.primary svg{transition:transform .2s}.lg-form .btn.primary:hover svg{transform:translateX(3px)}
+  .lg-form .btn.primary svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  .lg-err{display:none;align-items:center;gap:8px;margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--danger-soft);color:var(--danger-strong);font-size:15px;font-weight:600}
+  .lg-off{margin:0;padding:10px 14px;border-radius:12px;background:var(--warn-soft);color:var(--warn-strong);font-size:13px;font-weight:600;text-align:center}
+  @media (max-width:520px){ .lg-head{padding:26px 22px 6px} .lg-head h1{font-size:22px} .lg-form{padding:18px 22px 26px} }
+  @media (max-width:860px){
+    .lg-body{justify-content:center}
+    .lg-veil{background:color-mix(in srgb,var(--bg) 55%,transparent)}
+  }
+  @media (prefers-reduced-motion:reduce){ .lg-col{animation:none} #scene{transition:none} }
+</style>
+</head>
+<body>
+<canvas id="scene" aria-hidden="true"></canvas>
+<div class="lg-veil" aria-hidden="true"></div>
+<main class="lg-body">
+  <div class="lg-col">
+    <!-- only the log-in window: nothing about the system before log-in -->
+    <section class="panel" id="pLogin" hidden>
+      <div class="lg-head">
+        <div class="logo" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div><h1>Resonance Store</h1><p>เข้าสู่ระบบ</p></div>
+      </div>
+      <form id="fLogin" class="lg-form" autocomplete="off">
+        <label class="lg-field"><span>User</span>
+          <div class="lg-in"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            <input id="gid" name="username" autocomplete="off" spellcheck="false" required maxlength="20" placeholder="User"></div></label>
+        <label class="lg-field"><span>Password</span>
+          <div class="lg-in"><svg viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
+            <input id="pw" type="password" name="password" autocomplete="off" required maxlength="40" placeholder="Password"></div></label>
+        <button class="btn primary go" type="submit">เข้าสู่ระบบ<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <div class="lg-err" role="alert"></div>
+      </form>
+    </section>
+
+    <!-- first admin (only while the system has no admin) -->
+    <section class="panel" id="pSetup" hidden>
+      <div class="lg-head">
+        <div class="logo" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div><h1>Resonance Store</h1><p>ตั้งค่าครั้งแรก</p></div>
+      </div>
+      <form id="fSetup" class="lg-form" autocomplete="off">
+        <label class="lg-field"><span>Setup code</span><div class="lg-in"><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8M16 7l2 2"/></svg><input id="sTok" required autocomplete="off" spellcheck="false"></div></label>
+        <label class="lg-field"><span>GID ของแอดมิน</span><div class="lg-in"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg><input id="sGid" required maxlength="20" inputmode="numeric" autocomplete="off" spellcheck="false"></div></label>
+        <label class="lg-field"><span>ชื่อ-นามสกุล</span><div class="lg-in"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="M7 10h6M7 14h10"/></svg><input id="sName" required maxlength="120" autocomplete="off"></div></label>
+        <button class="btn primary go" type="submit">สร้างแอดมิน<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <div class="lg-err" role="alert"></div>
+      </form>
+    </section>
+
+    <p class="lg-off" id="offlineNote" hidden>เชื่อมต่อระบบไม่ได้ ลองใหม่อีกครั้ง</p>
+  </div>
+</main>
+<script>
+(function(){
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  /* only go back to a page of this site after log-in */
+  const next = (() => { const n = params.get('next') || '/'; return /^\/(?!\/)/.test(n) && !/^\/login\.html/i.test(n) ? n : '/'; })();
+  const api = (method, url, body) => fetch('/api/' + url, { method, credentials: 'same-origin', cache: 'no-store',
+      headers: Object.assign({ 'X-Requested-With': 'rs' }, body ? { 'Content-Type': 'application/json' } : {}), body: body ? JSON.stringify(body) : undefined })
+    .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw Object.assign(new Error(j.error || ('HTTP ' + r.status)), { status: r.status }); return j; });
+  const show = id => {
+    ['pLogin', 'pSetup'].forEach(p => { $(p).hidden = p !== id; });
+    const first = $(id).querySelector('input'); if (first) first.focus();
+  };
+  const err = (form, msg) => { const e = form.querySelector('.lg-err'); e.textContent = msg || ''; e.style.display = msg ? 'flex' : 'none'; };
+  async function submit(form, fn){
+    const b = form.querySelector('.go'); b.disabled = true; err(form, '');
+    try { await fn(); } catch (e){ err(form, e.status ? e.message : 'เชื่อมต่อระบบไม่ได้ ลองใหม่อีกครั้ง'); }
+    b.disabled = false;
+  }
+  $('fLogin').addEventListener('submit', e => { e.preventDefault(); submit(e.target, async () => {
+    await api('POST', 'auth/login', { gid: $('gid').value.trim(), password: $('pw').value.trim() });
+    location.replace(next);
+  }); });
+  $('fSetup').addEventListener('submit', e => { e.preventDefault(); submit(e.target, async () => {
+    await api('POST', 'auth/setup', { token: $('sTok').value.trim(), gid: $('sGid').value.trim(), name: $('sName').value.trim() });
+    location.replace('/users.html');
+  }); });
+  api('GET', 'auth/status').then(j => {
+    if (j.setupNeeded && !j.user) return show('pSetup');
+    if (j.user) return location.replace(next);
+    show('pLogin');
+  }).catch(() => { $('offlineNote').hidden = false; show('pLogin'); });
+})();
+</script>
+<script src="lib/three.min.js"></script>
+<script>
+/* decorative 3D store behind the log-in window (no real data, no text):
+   two racks, three shelves, rounded glossy trays in seeded random stacks, LED strips under the shelf lips,
+   a studio light rig, a soft floor glow, and a guide light that hops from tray to tray like the pick-to-light inside the app.
+   Slow camera drift + a little mouse parallax; a still frame for "reduce motion"; paused while the tab is hidden. */
+(function(){
+  'use strict';
+  const canvas = document.getElementById('scene');
+  if (!window.THREE){ canvas.remove(); return; }
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' }); }
+  catch { canvas.remove(); return; }
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const dark = document.documentElement.dataset.theme === 'dark';
+  const C = { bg: new THREE.Color(css('--bg') || '#F3F5F4'), brand: new THREE.Color(css('--brand') || '#6EBE49'),
+    brandStrong: new THREE.Color(css('--brand-strong') || '#3A8A28'), warn: new THREE.Color(css('--warn') || '#E3A008') };
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setClearColor(0x000000, 0);
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  /* colours are drawn exactly as the app's CSS (no tone mapping), so greens match the rest of the web */
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(dark ? 0x0c110f : C.bg, 13, 26);
+  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+
+  /* small canvas textures (radial glow, vertical fade for the light beam) */
+  function tex(w, h, paint){ const c = document.createElement('canvas'); c.width = w; c.height = h; paint(c.getContext('2d'), w, h); return new THREE.CanvasTexture(c); }
+  const hex = c => '#' + c.getHexString();
+  const glowTex = tex(256, 256, (g, w, h) => { const r = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.35, 'rgba(255,255,255,.35)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, w, h); });
+  const beamTex = tex(4, 256, (g, w, h) => { const l = g.createLinearGradient(0, 0, 0, h);
+    l.addColorStop(0, 'rgba(255,255,255,0)'); l.addColorStop(0.55, 'rgba(255,255,255,.35)'); l.addColorStop(1, 'rgba(255,255,255,1)'); g.fillStyle = l; g.fillRect(0, 0, w, h); });
+
+  /* studio light rig: soft sky, key with soft shadows, cool fill, green rim from behind */
+  scene.add(new THREE.HemisphereLight(dark ? 0xa9c4b4 : 0xffffff, dark ? 0x070a09 : 0xcfdad3, dark ? 0.55 : 0.6));
+  const key = new THREE.DirectionalLight(0xfff8ee, dark ? 0.8 : 0.75);
+  key.position.set(6, 10, 7); key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0004;
+  Object.assign(key.shadow.camera, { left: -7, right: 7, top: 7, bottom: -7, near: 1, far: 30 }); key.shadow.radius = 6;
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xdfeaff, dark ? 0.25 : 0.35); fill.position.set(-8, 4, 5); scene.add(fill);
+  const rim = new THREE.DirectionalLight(C.brand, dark ? 0.55 : 0.35); rim.position.set(-3, 5, -9); scene.add(rim);
+  const guideGlow = new THREE.PointLight(C.brand, dark ? 1.8 : 1.1, 4, 2); scene.add(guideGlow);
+
+  /* floor: satin surface that takes the shadows, a faint grid, a soft green pool of light under the racks */
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 60),
+    new THREE.MeshStandardMaterial({ color: dark ? 0x0d1210 : 0xf1f4f2, roughness: 0.85, metalness: 0.05 }));
+  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+  const grid = new THREE.GridHelper(60, 60, dark ? 0x2a3a31 : 0xd5dfd9, dark ? 0x18221d : 0xe1e8e4);
+  grid.material.transparent = true; grid.material.opacity = dark ? 0.7 : 0.65; grid.position.y = 0.002; scene.add(grid);
+  const pool = new THREE.Mesh(new THREE.PlaneGeometry(10, 5), new THREE.MeshBasicMaterial({ map: glowTex, color: C.brand, transparent: true,
+    opacity: dark ? 0.12 : 0.14, depthWrite: false, blending: dark ? THREE.AdditiveBlending : THREE.NormalBlending }));
+  pool.rotation.x = -Math.PI / 2; pool.position.y = 0.004; scene.add(pool);
+
+  /* racks: graphite frame, light shelf boards, LED strip under each front lip, perforated-look back panel */
+  const W = 2.6, D = 0.9, LEVELS = [0.2, 1.0, 1.8], H = 2.55, GAP = 3.5;
+  const frameM = new THREE.MeshStandardMaterial({ color: dark ? 0x5f6f67 : 0x3a4741, metalness: 0.75, roughness: 0.32 });
+  const boardM = new THREE.MeshStandardMaterial({ color: dark ? 0x222b26 : 0xf7f9f8, metalness: 0.15, roughness: 0.45 });
+  const ledM = new THREE.MeshBasicMaterial({ color: dark ? C.brand : C.brand.clone().lerp(new THREE.Color(0xffffff), 0.15) });
+  const backM = new THREE.MeshStandardMaterial({ color: dark ? 0x1a221e : 0xdfe6e2, metalness: 0.3, roughness: 0.6, transparent: true, opacity: dark ? 0.5 : 0.22 });
+  const store = new THREE.Group(); scene.add(store);
+  const slots = [];
+  [-GAP / 2, GAP / 2].forEach(rx => {
+    const rack = new THREE.Group(); rack.position.x = rx; store.add(rack);
+    const post = new THREE.BoxGeometry(0.06, H, 0.06);
+    [[-W / 2, -D / 2], [W / 2, -D / 2], [-W / 2, D / 2], [W / 2, D / 2], [0, -D / 2], [0, D / 2]].forEach(([x, z]) => {
+      const m = new THREE.Mesh(post, frameM); m.position.set(x, H / 2, z); m.castShadow = true; rack.add(m);
+    });
+    const back = new THREE.Mesh(new THREE.BoxGeometry(W, H - 0.1, 0.01), backM); back.position.set(0, H / 2, -D / 2 - 0.01); back.receiveShadow = true; rack.add(back);
+    LEVELS.forEach(y => {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(W + 0.04, 0.045, D + 0.02), boardM); b.position.y = y; b.castShadow = b.receiveShadow = true; rack.add(b);
+      const lip = new THREE.Mesh(new THREE.BoxGeometry(W + 0.06, 0.07, 0.025), frameM); lip.position.set(0, y, D / 2 + 0.02); lip.castShadow = true; rack.add(lip);
+      const led = new THREE.Mesh(new THREE.BoxGeometry(W - 0.1, 0.012, 0.012), ledM); led.position.set(0, y - 0.042, D / 2 + 0.02); rack.add(led);
+      const wash = new THREE.Mesh(new THREE.PlaneGeometry(W, 0.6), new THREE.MeshBasicMaterial({ map: glowTex, color: C.brand, transparent: true, opacity: dark ? 0.14 : 0.06, depthWrite: false, blending: THREE.AdditiveBlending }));
+      wash.position.set(0, y - 0.32, D / 2 + 0.035); rack.add(wash);
+      for (let half = 0; half < 2; half++) for (let s = 0; s < 4; s++) for (let row = 0; row < 2; row++)
+        slots.push({ x: rx - W / 2 + 0.2 + half * (W / 2) + s * 0.29, y: y + 0.0225, z: row ? -0.2 : 0.2 });
+    });
+    const top = new THREE.Mesh(new THREE.BoxGeometry(W + 0.08, 0.05, D + 0.08), frameM); top.position.y = H; top.castShadow = true; rack.add(top);
+  });
+
+  /* trays: rounded, extruded, clear-coated; seeded so the picture is the same every visit */
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const TRAY_H = 0.078, TW = 0.25, TD = 0.34, R = 0.03;
+  const shape = new THREE.Shape();
+  shape.moveTo(-TW / 2 + R, -TD / 2); shape.lineTo(TW / 2 - R, -TD / 2); shape.quadraticCurveTo(TW / 2, -TD / 2, TW / 2, -TD / 2 + R);
+  shape.lineTo(TW / 2, TD / 2 - R); shape.quadraticCurveTo(TW / 2, TD / 2, TW / 2 - R, TD / 2); shape.lineTo(-TW / 2 + R, TD / 2);
+  shape.quadraticCurveTo(-TW / 2, TD / 2, -TW / 2, TD / 2 - R); shape.lineTo(-TW / 2, -TD / 2 + R); shape.quadraticCurveTo(-TW / 2, -TD / 2, -TW / 2 + R, -TD / 2);
+  const trayGeo = new THREE.ExtrudeGeometry(shape, { depth: TRAY_H - 0.02, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.006, bevelSegments: 2, curveSegments: 4 });
+  trayGeo.rotateX(-Math.PI / 2); trayGeo.computeBoundingBox(); trayGeo.translate(0, -(trayGeo.boundingBox.min.y + trayGeo.boundingBox.max.y) / 2, 0);
+  const trays = [];
+  slots.forEach(sl => { const n = rnd() < 0.2 ? 0 : 1 + Math.floor(rnd() * 4); for (let k = 0; k < n; k++) trays.push({ x: sl.x, y: sl.y + TRAY_H / 2 + k * TRAY_H, z: sl.z, c: rnd() }); });
+  const trayMat = new THREE.MeshPhysicalMaterial({ roughness: 0.38, metalness: 0.0, clearcoat: 0.7, clearcoatRoughness: 0.25 });
+  const inst = new THREE.InstancedMesh(trayGeo, trayMat, trays.length); inst.castShadow = true; inst.receiveShadow = true;
+  const dummy = new THREE.Object3D(), col = new THREE.Color();
+  const palette = [C.brand.clone(), C.brandStrong.clone(), C.brand.clone().lerp(new THREE.Color(0xffffff), 0.25), new THREE.Color(dark ? 0x4b5953 : 0xb7c3bd), C.warn.clone()];
+  const base = trays.map((t, i) => {
+    dummy.position.set(t.x, t.y, t.z); dummy.updateMatrix(); inst.setMatrixAt(i, dummy.matrix);
+    const c = palette[t.c < 0.38 ? 0 : t.c < 0.6 ? 1 : t.c < 0.78 ? 2 : t.c < 0.93 ? 3 : 4]; inst.setColorAt(i, c); return c;
+  });
+  store.add(inst);
+
+  /* guide light: fading beam + halo ring + the tray itself lights up */
+  const beamMat = new THREE.MeshBasicMaterial({ map: beamTex, color: C.brand, transparent: true, opacity: dark ? 0.75 : 0.55, depthWrite: false, side: THREE.DoubleSide, blending: dark ? THREE.AdditiveBlending : THREE.NormalBlending });
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.2, 1, 32, 1, true), beamMat);
+  const halo = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), new THREE.MeshBasicMaterial({ map: glowTex, color: C.brand, transparent: true, opacity: dark ? 0.9 : 0.6, depthWrite: false, blending: THREE.AdditiveBlending }));
+  halo.rotation.x = -Math.PI / 2;
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.012, 10, 48), new THREE.MeshBasicMaterial({ color: dark ? C.brand : C.brandStrong }));
+  ring.rotation.x = Math.PI / 2;
+  store.add(beam, halo, ring);
+  let ti = Math.floor(trays.length / 2), fi = ti, hopAt = 0;
+  const HOP = 3.2, MOVE = 0.9, lit = new THREE.Color(0xffffff);
+  function setLit(i, k){ col.copy(base[i]).lerp(lit, k); inst.setColorAt(i, col); inst.instanceColor.needsUpdate = true; }
+
+  /* framing: racks to the right of the log-in window on a wide screen */
+  const pointer = { x: 0, y: 0, sx: 0, sy: 0 };
+  window.addEventListener('pointermove', e => { pointer.x = e.clientX / innerWidth - 0.5; pointer.y = e.clientY / innerHeight - 0.5; }, { passive: true });
+  function resize(){
+    const w = innerWidth, h = innerHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h;
+    if (w > 860) camera.setViewOffset(w, h, -w * 0.17, 0, w, h); else camera.clearViewOffset();
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize); resize();
+
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const t0 = performance.now();
+  let first = true;
+  function frame(now){
+    const t = still ? 6 : (now - t0) / 1000;
+    pointer.sx += (pointer.x - pointer.sx) * 0.04; pointer.sy += (pointer.y - pointer.sy) * 0.04;
+    const a = 0.6 + Math.sin(t * 0.07) * 0.3 + pointer.sx * 0.16, r = 12.5;
+    camera.position.set(Math.sin(a) * r, 3.6 + Math.sin(t * 0.11) * 0.2 - pointer.sy * 0.5, Math.cos(a) * r);
+    camera.lookAt(0, 1.1, 0);
+    if (t > hopAt){ setLit(ti, 0); fi = ti; do { ti = Math.floor(rnd() * trays.length); } while (ti === fi && trays.length > 1); hopAt = t + HOP; }
+    const k = Math.min(1, (t - (hopAt - HOP)) / MOVE), e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+    const A = trays[fi], B = trays[ti];
+    const x = A.x + (B.x - A.x) * e, z = A.z + (B.z - A.z) * e, y = A.y + (B.y - A.y) * e, top = y + TRAY_H / 2 + 0.004, len = 3.4 - top;
+    beam.scale.y = len; beam.position.set(x, top + len / 2, z);
+    const pulse = 0.5 + 0.5 * Math.sin(t * 3.2);
+    ring.position.set(x, top + 0.005, z); ring.scale.setScalar(1 + pulse * 0.15);
+    halo.position.set(x, top + 0.003, z); halo.material.opacity = (dark ? 0.6 : 0.4) + pulse * 0.3;
+    guideGlow.position.set(x, top + 0.45, z);
+    if (k >= 1) setLit(ti, 0.25 + pulse * 0.25);
+    renderer.render(scene, camera);
+    if (first){ first = false; canvas.classList.add('on'); }
+    if (!still && !document.hidden) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && !still) requestAnimationFrame(frame); });
+})();
+</script>
+</body>
+</html>

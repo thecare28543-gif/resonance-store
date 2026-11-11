@@ -1,0 +1,16 @@
+{
+  "name": "resonance-store",
+  "version": "2026.11.11",
+  "private": true,
+  "description": "Resonance Store web app + data server (PostgreSQL, login)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}

@@ -12,6 +12,17 @@ Newest first. One line per release: date · who · what · why.
 - Deploy: `npm install` in `app/`, run `db/01_create_user_and_db.sql` + `db/schema.sql` in pgAdmin (see `db/วิธีตั้งค่าฐานข้อมูล.md`), fill `server-config.json`, then `deploy/2-install-autostart.bat`.
 - Tests: API 43/43, 2-PC end-to-end with log-in 24/24, UI 14/14.
 
+## 2026-11-10 · Sirinya Mungjuntuek · release 2026.11.10 + server live
+- **Server is live:** the Dev team has deployed `server.js` on a company server with https. Every lab PC now opens the app from the server URL; data is shared and backed up there.
+- Safer saving when two PCs save at once: `sync.js` merges the changes (3-way merge) instead of one PC overwriting the other.
+- Hold jobs are locked in Data Entry; Reset and Import keep held jobs; Data Entry refuses more than 80 pieces per position.
+- Undo / Redo only steps back this PC's own changes and never touches a held job.
+- Version `VER` (in `sync.js`) shows on the sync chip and is sent as header `X-RS-Ver`; the server reports which versions ran in the last 2 minutes and the app warns when a PC still runs old files. **Bump `VER` on every release of `app.js` / `sync.js`.**
+- Add form shows a picture of where the trays go (stack 1–4 from the left, tray 1 at the bottom). Testers are shown as "Tester 01/02/03". Jobs table can be edited in place (Owner, Product, Description, Test Status, Tester); held jobs stay locked.
+- Fresh install starts with no zones; the recommended zones load only from the reset button.
+- Regression: 2-PC end-to-end test 23/23 pass.
+- Known: importing a new Job Detail file overwrites manual edits made in the Jobs table.
+
 ## 2026-11-01 · Sirinya Mungjuntuek · training tab + hidden server
 - New **อบรม** tab: hands-on checklist (5 skills, ticked by the trainer) + quiz (10 of 14 questions, pass 8/10), record per person and per crew, CSV export, printable sign-off sheet. Stored in `resTrainV1` (shared, backed up).
 - Training manual PDF shown inside the อบรม tab (`app/training-manual.pdf`; open full screen or download). `server.js` now serves `.pdf` as `application/pdf`.
@@ -22,5 +33,5 @@ Newest first. One line per release: date · who · what · why.
 - First hand-over to the Dev team: app files, developer documentation, hand-over checklist.
 - State of the app:
   - In daily use in the HSA Resonance lab: 3D store, smart slot, pick list, Hold block, roving audit, Kaizen dashboard.
-  - Server sync and backups (`server.js`, `sync.js`) have been tested and are waiting for the Dev team to deploy them on a company server with https.
+  - Server sync and backups (`server.js`, `sync.js`) have been tested and are waiting for the Dev team to deploy them on a company server with https. (Done — see 2026-11-10.)
   - QR scanning is implemented but not in use; it is waiting for a clean-room approved scanner.

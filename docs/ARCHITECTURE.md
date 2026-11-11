@@ -3,22 +3,23 @@
 ## The pieces
 
 ```
- Lab PC (Edge)                                   Server (Node.js 18+)
- ┌───────────────────────────────────────┐       ┌──────────────────────────────┐
- │ RESONANCE_STORE.html                  │       │ server.js                    │
- │  ├ sync.js   (loads first)            │ HTTP  │  ├ serves the app files      │
- │  │   pulls shared data → localStorage │◄─────►│  ├ /api/data  (one shared    │
- │  │   pushes every change, polls 5 s   │       │  │   copy of all data)       │
- │  ├ app.js    (the whole UI)           │       │  └ backups: hourly + shift   │
- │  │   reads / writes localStorage      │       │      change → data/backups   │
- │  └ sw.js     (offline cache)          │       │      + optional OneDrive dir │
+ Lab PC (Edge)                                   Server (Node.js 18+)                 PostgreSQL
+ ┌───────────────────────────────────────┐       ┌──────────────────────────────┐    ┌──────────────────────┐
+ │ login.html  (GID / GID)               │       │ server.js                    │    │ resonance_store      │
+ │ RESONANCE_STORE.html                  │       │  ├ log-in, roles, sessions   │    │  ├ app_users …       │
+ │  ├ sync.js   (loads first)            │ HTTP  │  ├ serves the app files      │ pg │  ├ rs_kv (master)    │
+ │  │   pulls shared data → localStorage │◄─────►│  │   (only after log-in)     │◄──►│  ├ store_rows, jobs, │
+ │  │   pushes every change, polls 5 s   │       │  ├ /api/data (one shared     │    │  │   holds … (read)  │
+ │  ├ app.js    (the whole UI)           │       │  │   copy, 3-way merge)      │    │  └ rs_backups        │
+ │  └ sw.js     (offline cache)          │       │  └ backups: hourly + shift   │    └──────────────────────┘
+ │ users.html  (admins: accounts)        │       │      (+ optional team folder)│
  └───────────────────────────────────────┘       └──────────────────────────────┘
 ```
 
 - **`app.js`** is the application: tabs, KPIs, 2D rack map, 3D store (three.js), import/export, hold, pick list, reports, Kaizen dashboard. It only knows `localStorage`. It has no idea a server exists.
 - **`sync.js`** sits between `app.js` and the server. It wraps `localStorage.setItem`: every write to a **shared key** is queued and sent with `PUT api/data`. Every 5 s it polls `GET api/data?since=<version>` and writes other PCs' changes into `localStorage`. It then fires a `storage` event, which `app.js` already handles by reloading its state.
 - **`sw.js`** is a service worker that caches the app files, so the page still opens when the server is down. It only works on `https` or `localhost`.
-- **`server.js`** keeps `data/resonance-data.json` with a global version counter and takes the backups. The full API contract is in `DEPLOY.md`.
+- **`server.js`** keeps the shared data in PostgreSQL (`rs_kv` + a global version in `rs_meta`), handles log-in and roles, and takes the backups (table `rs_backups`). The full API contract is in `DEPLOY.md`; tables in `app/db/schema.sql`.
 
 ## Modes (shown in the status chip in the top bar)
 
@@ -28,7 +29,9 @@
 | `online` | Server reachable | All PCs see the same data within ~5 s. |
 | `offline` | Server stopped answering | Keeps working on this PC, queues changes (`rsSyncPending`), sends them when the server is back. |
 
-**Conflicts:** two PCs change the same key from the same base version. The second `PUT` gets `409`, its copy is saved on the server as a `…-conflict.json` backup, and the PC takes the server's version. Nothing is silently lost.
+**Conflicts:** two PCs change the same key from the same base version. The second `PUT` gets `409`; its copy is saved as a `…-conflict` backup, then `sync.js` merges both changes (3-way merge against the version it started from; store rows by `_id`) and sends again. Both PCs' changes are kept.
+
+**Version check:** `VER` in `sync.js` is sent as `X-RS-Ver`; the server reports which versions ran in the last 2 minutes and the app warns when a PC still runs old files. **Bump `VER` on every release of `app.js` / `sync.js`.**
 
 ## Data lives in `localStorage` keys
 
@@ -48,6 +51,8 @@ Each key holds a JSON string. The keys listed in `SHARED` at the top of `sync.js
 
 QR labels and scanning (`QR LABELS`, `SCAN`, `POKA-YOKE` sections) are implemented. They are **not used in the lab yet**: the lab is still choosing a scanner that meets clean-room rules. Keep the code; it is the planned next phase.
 
-## No login
+## Log-in and roles
 
-There is no authentication. The editor name typed in the top bar goes into `Last_Editor` and the logs. The app is meant for the intranet only. Add SSO or IP restrictions at the reverse proxy if required (see `DEPLOY.md`).
+Everyone logs in on `login.html` with **user = GID, password = GID** (lab decision). The logged-in name fills the editor field (`Last_Editor` and the logs) and cannot be typed over. Roles: `admin` (everything + `users.html` + restore), `user` (store work), `viewer` (read only: `sync.js` refuses to write shared keys and the server returns 403). Details and security notes in `DEPLOY.md`.
+
+Opening `RESONANCE_STORE.html` directly as a file still works (mode `local`, this PC only, no log-in) — keep it for emergencies only.

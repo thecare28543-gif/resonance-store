@@ -53,15 +53,22 @@ Columns used (`JOB_COLS`): Job No., Test Status, Work Week, Job Type, Group Name
 
 **Renaming a key loses that data on every PC.** That is why the `V7` suffix was never changed. If the format must change, read the old key and migrate it in code.
 
-## Server data (`data/resonance-data.json`)
+## Server data (PostgreSQL, since 2026.11.11)
 
+- `rs_kv(key, value, ver, updated_at, updated_by)` holds exactly the localStorage strings above (master copy); `rs_meta.version` is the global counter. `updated_by` is the GID of the person whose PC saved it.
+- Readable copies rebuilt on every save (for reports — never edit): `store_rows` (from `resStoreV7`), `jobs` (`jobDetailV7`, every column in `detail`), `holds` (`resHoldV1`), `hold_log` (`resHoldLogV1`), `dispose_decisions` (`disposeDataV7`), `zones` (`resZoneV1`), `training_attempts` (`resTrainV1`).
+- Views: `v_position_load` (pieces per position + status), `v_jobs_in_store` (job, owner, locations, on hold), `v_users`.
+- Accounts: `app_users` (GID, name, role, crew, department, active, password hash), `user_sessions`, `login_log`, `user_admin_log`.
+
+Backups (table `rs_backups`, and files in `backupDir` if set) keep the old file shape, so any backup can be restored from a file:
 ```json
 { "version": 1234, "updatedAt": "2026-11-01T12:00:00.000Z",
   "keys": { "resStoreV7": { "v": "<the JSON string>", "ver": 1230 }, ... } }
 ```
-
-Backups in `data/backups/` (and `backupDir`) have the same shape and are named `resonance-YYYYMMDD-HHMM-<reason>.json`. The reason is one of `auto`, `shift`, `first`, `manual`, `shutdown`, `before-restore` or `conflict`.
+They are named `resonance-YYYYMMDD-HHMMSS-<reason>.json`; the reason is one of `auto`, `shift`, `first`, `manual`, `shutdown`, `before-restore` or `conflict`.
 
 ## Personal data in the code
 
-`HSA_TEAM_EMAILS` (`app.js` CONFIG) is **empty in the repository**. On the deployed copy, put the lab's Teams chat link and/or team e-mails there, or the team alert only copies the message. Owner e-mails for overdue work are guessed as `firstname.lastname@seagate.com` and can be corrected in the app. Keep the repository internal.
+`app.js` (CONFIG, `HSA_TEAM_EMAILS`) holds a link to the lab's Teams chat and a commented-out list of team e-mail addresses. Owner e-mails for overdue work are guessed as `firstname.lastname@seagate.com` and can be corrected in the app. Keep the repository internal.
+
+The database holds staff names and GIDs (`app_users`) and log-in history with IP addresses (`login_log`): treat database dumps and backups as internal / confidential.

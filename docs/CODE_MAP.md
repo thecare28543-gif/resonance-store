@@ -4,13 +4,15 @@
 
 | File | Lines | Role |
 |---|---|---|
-| `RESONANCE_STORE.html` | ~490 | All markup: top bar, sidebar tabs, panels, dialogs. Elements are found by `id` from `app.js`. |
-| `styles.css` | ~880 | Light theme by default, dark theme under `[data-theme="dark"]`. Colours are CSS variables at the top. |
-| `app.js` | ~3,900 | The whole UI and logic, one file in plain ES2020+ with no modules and no framework. |
-| `sync.js` | ~210 | Server sync layer (see `ARCHITECTURE.md`). Loaded before `app.js`. |
+| `RESONANCE_STORE.html` | ~560 | All markup: top bar, sidebar tabs, panels, dialogs. Elements are found by `id` from `app.js`. |
+| `styles.css` | ~980 | Light theme by default, dark theme under `[data-theme="dark"]`. Colours are CSS variables at the top. |
+| `app.js` | ~4,100 | The whole UI and logic, one file in plain ES2020+ with no modules and no framework. |
+| `sync.js` | ~350 | Server sync layer (see `ARCHITECTURE.md`). Loaded before `app.js`. |
 | `sw.js` | ~20 | Offline cache. **Bump `CACHE` when you release**, or browsers keep old files. |
-| `server.js` | ~200 | Data server and backups. No dependencies. |
-| `server-config.json` | | `port`, `dataDir`, `backupDir`, `keepDays`. |
+| `login.html` · `users.html` | ~290 · ~330 | Log-in window (with the decorative 3D racks) and the admin page for user accounts. Self-contained: page script at the bottom of each file. |
+| `server.js` | ~520 | Log-in, roles, API, static files, backups. One dependency: `pg` (PostgreSQL). |
+| `server-config.json` | | `port`, `dataDir`, `backupDir`, `keepDays`, `sessionHours`, `secureCookie`, `trustProxy`, `database`. Copy from `server-config.example.json`. |
+| `db/schema.sql` | ~270 | Every PostgreSQL table + view, and `rs_refresh()` that rebuilds the readable tables. |
 
 ## `app.js` sections
 
@@ -19,58 +21,58 @@ Every section starts with a banner comment `/* ===================== NAME ======
 | Line | Section |
 |---|---|
 | 9 | CONFIG |
-| 57 | STATE |
-| 72 | HELPERS |
-| 108 | HOLD (a held job must not be scrapped, picked out or deleted) |
-| 130 | ZONES (each position belongs to one Product + Type; held jobs live in the HOLD zone) |
-| 226 | HISTORY LOG (Time Machine · audit · forecast · tester stats) |
-| 308 | DATE HELPERS (for "Days in Store") |
-| 362 | TOAST NOTIFICATION |
-| 372 | CSV PARSER (robust, handles quoted multi-line fields) |
-| 417 | AGGREGATION |
-| 475 | FILTER UI (Tick Box / Checkbox multi-select) |
-| 584 | JOB TABLE FILTER |
-| 656 | KPIs |
-| 677 | RACK MAP |
-| 741 | SIDE PANELS |
-| 811 | TEAM ALERT |
-| 846 | JOBS TABLE |
-| 906 | DATA ENTRY TABLE |
-| 981 | IMPORT / EXPORT |
-| 1084 | ADD WORK (receive into store) |
-| 1280 | POSITION DIALOG |
-| 1321 | HOLD DIALOG (hold needs a name + reason, release needs an approver + reason) |
-| 1372 | PAPER FALLBACK (system down: the printed sheet still tells where everything is) |
-| 1394 | SHIFT |
-| 1414 | THEME |
-| 1423 | 3D STORE |
-| 2264 | 3D: SEARCH & FLY · COLOUR MODES · LEGEND |
-| 2317 | TIME MACHINE |
-| 2356 | INSIGHTS: FORECAST |
-| 2431 | INSIGHTS: TESTER STATS |
-| 2464 | INSIGHTS: SHIFT HANDOVER |
-| 2541 | INSIGHTS: AUDIT LOG |
-| 2579 | TV / KIOSK MODE |
-| 2660 | QR LABELS |
-| 2695 | ZONE SETUP (dialog + printable zone signs) |
-| 2742 | SCAN (camera QR or USB barcode gun) |
-| 2815 | UNDO / REDO UI |
-| 2838 | PICK LIST (pick work out along the shortest walk) |
-| 2945 | CTRL+K COMMAND PALETTE |
-| 2997 | DESKTOP NOTIFICATIONS + SOUND |
-| 3040 | VOICE COMMANDS (Thai, push to talk) |
-| 3079 | OWNER E-MAILS FOR OVERDUE WORK |
-| 3115 | WEEKLY REPORT (print / save as PDF) |
-| 3167 | KAIZEN: timing, before / after, ROI |
-| 3298 | CYCLE COUNT (blind count of a few positions every shift) |
-| 3356 | POKA-YOKE: scan the shelf QR before saving |
-| 3360 | GUIDE (one-page standard work) + FIRST-RUN TOUR |
-| 3430 | TRAINING (who has been trained, hands-on check + quiz, shared on the server) |
-| 3556 | TABS |
-| 3591 | RENDER |
-| 3624 | GUIDE LIGHT ON SCREEN (pick-to-light idea, shown only on the 3D / 2D map: the real shelves have no lamps) |
-| 3671 | EVENTS |
-| 3957 | INIT |
+| 60 | STATE |
+| 77 | HELPERS |
+| 114 | HOLD (a held job must not be scrapped, picked out or deleted) |
+| 136 | ZONES (each position belongs to one Product + Type; held jobs live in the HOLD zone) |
+| 255 | HISTORY LOG (Time Machine · audit · forecast · tester stats) |
+| 337 | DATE HELPERS (for "Days in Store") |
+| 391 | TOAST NOTIFICATION |
+| 401 | CSV PARSER (robust, handles quoted multi-line fields) |
+| 446 | AGGREGATION |
+| 504 | FILTER UI (Tick Box / Checkbox multi-select) |
+| 613 | JOB TABLE FILTER |
+| 685 | KPIs |
+| 706 | RACK MAP |
+| 770 | SIDE PANELS |
+| 840 | TEAM ALERT |
+| 875 | JOBS TABLE |
+| 940 | DATA ENTRY TABLE |
+| 1018 | IMPORT / EXPORT |
+| 1128 | ADD WORK (receive into store) |
+| 1324 | POSITION DIALOG |
+| 1365 | HOLD DIALOG (hold needs a name + reason, release needs an approver + reason) |
+| 1416 | PAPER FALLBACK (system down: the printed sheet still tells where everything is) |
+| 1438 | SHIFT |
+| 1458 | THEME |
+| 1467 | 3D STORE |
+| 2308 | 3D: SEARCH & FLY · COLOUR MODES · LEGEND |
+| 2361 | TIME MACHINE |
+| 2400 | INSIGHTS: FORECAST |
+| 2475 | INSIGHTS: TESTER STATS |
+| 2508 | INSIGHTS: SHIFT HANDOVER |
+| 2585 | INSIGHTS: AUDIT LOG |
+| 2623 | TV / KIOSK MODE |
+| 2704 | QR LABELS |
+| 2739 | ZONE SETUP (dialog + printable zone signs) |
+| 2786 | SCAN (camera QR or USB barcode gun) |
+| 2859 | UNDO / REDO UI |
+| 2889 | PICK LIST (pick work out along the shortest walk) |
+| 2996 | CTRL+K COMMAND PALETTE |
+| 3048 | DESKTOP NOTIFICATIONS + SOUND |
+| 3091 | VOICE COMMANDS (Thai, push to talk) |
+| 3130 | OWNER E-MAILS FOR OVERDUE WORK |
+| 3166 | WEEKLY REPORT (print / save as PDF) |
+| 3218 | KAIZEN: timing, before / after, ROI |
+| 3383 | CYCLE COUNT (blind count of a few positions every shift) |
+| 3441 | POKA-YOKE: scan the shelf QR before saving |
+| 3445 | GUIDE (one-page standard work) + FIRST-RUN TOUR |
+| 3515 | TRAINING (who has been trained, hands-on check + quiz, shared on the server) |
+| 3643 | TABS |
+| 3678 | RENDER |
+| 3711 | GUIDE LIGHT ON SCREEN (pick-to-light idea, shown only on the 3D / 2D map: the real shelves have no lamps) |
+| 3758 | EVENTS |
+| 4088 | INIT |
 
 ## How a change flows
 

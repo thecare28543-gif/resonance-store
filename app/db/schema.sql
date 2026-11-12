@@ -21,8 +21,8 @@ CREATE TABLE IF NOT EXISTS app_users (
   crew                  varchar(10),                                   -- shift crew A / B / C (optional)
   department            varchar(80),
   active                boolean      NOT NULL DEFAULT true,            -- false = cannot log in (keep the row for history)
-  password_hash         text,                                          -- scrypt$N$r$p$salt$hash, never the password itself
-  must_change_password  boolean      NOT NULL DEFAULT true,            -- true after an admin sets / resets the password
+  password_hash         text,                                          -- scrypt$N$r$p$salt$hash of the GID (lab rule: password = GID)
+  must_change_password  boolean      NOT NULL DEFAULT true,            -- not used since 2026.11.11 (log-in is GID / GID); always false
   failed_logins         integer      NOT NULL DEFAULT 0,
   locked_until          timestamptz,                                   -- 5 wrong passwords = locked 15 minutes
   last_login_at         timestamptz,
@@ -254,7 +254,8 @@ END $$;
 /* ---------------- handy views for reports ---------------- */
 CREATE OR REPLACE VIEW v_position_load AS
 SELECT rack, side, floor, cell, count(*) AS rows, sum(quantity) AS pieces,
-       CASE WHEN sum(quantity) >= 80 THEN 'OVER LIMIT' WHEN sum(quantity) >= 64 THEN 'WARNING' ELSE 'NORMAL' END AS status
+       /* 80 = LIMIT, 60 = WARN_AT in app.js */
+       CASE WHEN sum(quantity) >= 80 THEN 'OVER LIMIT' WHEN sum(quantity) >= 60 THEN 'WARNING' ELSE 'NORMAL' END AS status
 FROM store_rows GROUP BY rack, side, floor, cell ORDER BY rack, side, floor, cell;
 
 CREATE OR REPLACE VIEW v_jobs_in_store AS

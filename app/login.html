@@ -49,23 +49,49 @@
   .lg-form .btn.primary svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
   .lg-err{display:none;align-items:center;gap:8px;margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--danger-soft);color:var(--danger-strong);font-size:15px;font-weight:600}
   .lg-off{margin:0;padding:10px 14px;border-radius:12px;background:var(--warn-soft);color:var(--warn-strong);font-size:13px;font-weight:600;text-align:center}
+  /* --- extras: glowing border that flows round the card, 3D tilt, shimmer, shake on error, fly-out on success --- */
+  @property --ang{syntax:'<angle>';inherits:false;initial-value:0deg}
+  .lg-tilt{perspective:1200px}
+  .lg-col .panel{transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .25s ease-out;transform-style:preserve-3d}
+  .lg-col .panel::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.6px;pointer-events:none;
+    background:conic-gradient(from var(--ang),transparent 0 62%,var(--brand) 74%,var(--warn) 82%,transparent 92%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+    animation:lgSpin 6s linear infinite;opacity:.9}
+  @keyframes lgSpin{to{--ang:360deg}}
+  .lg-col .panel:focus-within::after{animation-duration:2.4s;opacity:1}
+  .lg-head .logo span{transform-origin:bottom;animation:lgBars 1.1s cubic-bezier(.3,.7,.3,1) both}
+  .lg-head .logo span:nth-child(2){animation-delay:.12s}.lg-head .logo span:nth-child(3){animation-delay:.24s}
+  @keyframes lgBars{from{transform:scaleY(.15)}to{transform:none}}
+  .lg-form .btn.primary{position:relative;overflow:hidden}
+  .lg-form .btn.primary::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-18deg);animation:lgShine 3.6s ease-in-out 2.2s infinite}
+  @keyframes lgShine{0%,70%{left:-60%}100%{left:130%}}
+  .lg-form .btn.primary.busy{pointer-events:none}
+  .lg-form .btn.primary.busy svg{display:none}
+  .lg-form .btn.primary.busy::before{content:"";width:18px;height:18px;border-radius:50%;border:2.5px solid currentColor;border-right-color:transparent;animation:lgRot .7s linear infinite}
+  @keyframes lgRot{to{transform:rotate(360deg)}}
+  .lg-in:focus-within>svg{stroke:var(--brand-strong)}
+  .lg-shake{animation:lgShake .45s cubic-bezier(.36,.07,.19,.97)}
+  @keyframes lgShake{10%,90%{translate:-2px 0}20%,80%{translate:4px 0}30%,50%,70%{translate:-8px 0}40%,60%{translate:8px 0}}
+  .lg-col.out{transition:opacity .5s ease,transform .6s cubic-bezier(.6,0,.4,1);opacity:0;transform:translateY(-18px) scale(.96)}
+  .lg-cap{position:absolute;right:12px;font-size:11.5px;font-weight:700;color:var(--warn-strong);background:var(--warn-soft);border-radius:6px;padding:2px 7px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .lg-cap.on{opacity:1}
   @media (max-width:520px){ .lg-head{padding:26px 22px 6px} .lg-head h1{font-size:22px} .lg-form{padding:18px 22px 26px} }
   @media (max-width:860px){
     .lg-body{justify-content:center}
     .lg-veil{background:color-mix(in srgb,var(--bg) 55%,transparent)}
   }
-  @media (prefers-reduced-motion:reduce){ .lg-col{animation:none} #scene{transition:none} }
+  @media (prefers-reduced-motion:reduce){ .lg-col{animation:none} #scene{transition:none} .lg-col .panel::after,.lg-form .btn.primary::after,.lg-head .logo span{animation:none} .lg-col .panel{transform:none} }
 </style>
 </head>
 <body>
 <canvas id="scene" aria-hidden="true"></canvas>
 <div class="lg-veil" aria-hidden="true"></div>
 <main class="lg-body">
-  <div class="lg-col">
+  <div class="lg-col lg-tilt">
     <!-- only the log-in window: nothing about the system before log-in -->
     <section class="panel" id="pLogin" hidden>
       <div class="lg-head">
-        <div class="logo" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="logo lab" aria-hidden="true"></div>
         <div><h1>Resonance Store</h1><p>เข้าสู่ระบบ</p></div>
       </div>
       <form id="fLogin" class="lg-form" autocomplete="off">
@@ -74,7 +100,7 @@
             <input id="gid" name="username" autocomplete="off" spellcheck="false" required maxlength="20" placeholder="User"></div></label>
         <label class="lg-field"><span>Password</span>
           <div class="lg-in"><svg viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
-            <input id="pw" type="password" name="password" autocomplete="off" required maxlength="40" placeholder="Password"></div></label>
+            <input id="pw" type="password" name="password" autocomplete="off" required maxlength="40" placeholder="Password"><span class="lg-cap" id="capsTip">Caps Lock</span></div></label>
         <button class="btn primary go" type="submit">เข้าสู่ระบบ<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         <div class="lg-err" role="alert"></div>
       </form>
@@ -83,7 +109,7 @@
     <!-- first admin (only while the system has no admin) -->
     <section class="panel" id="pSetup" hidden>
       <div class="lg-head">
-        <div class="logo" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="logo lab" aria-hidden="true"></div>
         <div><h1>Resonance Store</h1><p>ตั้งค่าครั้งแรก</p></div>
       </div>
       <form id="fSetup" class="lg-form" autocomplete="off">
@@ -113,19 +139,42 @@
     const first = $(id).querySelector('input'); if (first) first.focus();
   };
   const err = (form, msg) => { const e = form.querySelector('.lg-err'); e.textContent = msg || ''; e.style.display = msg ? 'flex' : 'none'; };
+  const scene = () => window.RS_SCENE || { typing(){}, focus(){}, error(){}, success(){ return Promise.resolve(); } };
   async function submit(form, fn){
-    const b = form.querySelector('.go'); b.disabled = true; err(form, '');
-    try { await fn(); } catch (e){ err(form, e.status ? e.message : 'เชื่อมต่อระบบไม่ได้ ลองใหม่อีกครั้ง'); }
-    b.disabled = false;
+    const b = form.querySelector('.go'); b.disabled = true; b.classList.add('busy'); err(form, '');
+    try { await fn(); }
+    catch (e){
+      err(form, e.status ? e.message : 'เชื่อมต่อระบบไม่ได้ ลองใหม่อีกครั้ง');
+      const card = form.closest('.panel'); card.classList.remove('lg-shake'); void card.offsetWidth; card.classList.add('lg-shake');
+      scene().error();
+    }
+    b.disabled = false; b.classList.remove('busy');
   }
+  /* success: the card flies off and the camera dives to the lit tray, then the app opens */
+  async function leave(to){ document.querySelector('.lg-col').classList.add('out'); await Promise.race([scene().success(), new Promise(r => setTimeout(r, 1200))]); location.replace(to); }
   $('fLogin').addEventListener('submit', e => { e.preventDefault(); submit(e.target, async () => {
     await api('POST', 'auth/login', { gid: $('gid').value.trim(), password: $('pw').value.trim() });
-    location.replace(next);
+    await leave(next);
   }); });
   $('fSetup').addEventListener('submit', e => { e.preventDefault(); submit(e.target, async () => {
     await api('POST', 'auth/setup', { token: $('sTok').value.trim(), gid: $('sGid').value.trim(), name: $('sName').value.trim() });
-    location.replace('/users.html');
+    await leave('/users.html');
   }); });
+  /* the store answers the keyboard: typing makes the guide light hop, focus moves the camera in */
+  document.querySelectorAll('.lg-form input').forEach(i => {
+    i.addEventListener('input', () => scene().typing());
+    i.addEventListener('focus', () => scene().focus(true));
+    i.addEventListener('blur', () => scene().focus(false));
+  });
+  ['keydown', 'keyup'].forEach(ev => $('pw').addEventListener(ev, e => { if (e.getModifierState) $('capsTip').classList.toggle('on', e.getModifierState('CapsLock')); }));
+  $('pw').addEventListener('blur', () => $('capsTip').classList.remove('on'));
+  /* the card leans a little towards the mouse */
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) window.addEventListener('pointermove', e => {
+    document.querySelectorAll('.lg-col .panel').forEach(p => {
+      const r = p.getBoundingClientRect(), dx = (e.clientX - (r.left + r.width / 2)) / innerWidth, dy = (e.clientY - (r.top + r.height / 2)) / innerHeight;
+      p.style.setProperty('--ry', (dx * 6).toFixed(2) + 'deg'); p.style.setProperty('--rx', (-dy * 6).toFixed(2) + 'deg');
+    });
+  }, { passive: true });
   api('GET', 'auth/status').then(j => {
     if (j.setupNeeded && !j.user) return show('pSetup');
     if (j.user) return location.replace(next);
@@ -247,9 +296,41 @@
   const HOP = 3.2, MOVE = 0.9, lit = new THREE.Color(0xffffff);
   function setLit(i, k){ col.copy(base[i]).lerp(lit, k); inst.setColorAt(i, col); inst.instanceColor.needsUpdate = true; }
 
+  /* scanner: a thin green light sheet that sweeps across both racks now and then */
+  const scan = new THREE.Mesh(new THREE.PlaneGeometry(0.5, H + 0.3), new THREE.MeshBasicMaterial({ map: tex(64, 4, (g, w, h) => {
+    const l = g.createLinearGradient(0, 0, w, 0); l.addColorStop(0, 'rgba(255,255,255,0)'); l.addColorStop(0.5, 'rgba(255,255,255,1)'); l.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = l; g.fillRect(0, 0, w, h); }),
+    color: C.brand, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
+  scan.rotation.y = Math.PI / 2; scan.position.y = H / 2; store.add(scan);
+  const SPAN = GAP / 2 + W / 2 + 0.3;
+
+  /* intro: every tray starts above its place and drops in, left to right */
+  const order = trays.map((t, i) => i).sort((a, b) => trays[a].x - trays[b].x || trays[a].y - trays[b].y);
+  order.forEach((i, n) => { trays[i].delay = 0.6 + n / order.length * 1.6; });
+  const easeOutBack = k => { const c = 1.6; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); };
+  let hover = -1;
+  function placeTray(i, t, lift){
+    const tr = trays[i], k = Math.min(1, Math.max(0, (t - tr.delay) / 0.45));
+    dummy.position.set(tr.x, tr.y + (1 - easeOutBack(k)) * 1.6 + (lift || 0), tr.z);
+    dummy.scale.setScalar(k === 0 ? 0.0001 : 1); dummy.updateMatrix(); inst.setMatrixAt(i, dummy.matrix);
+  }
+
+  /* hover: the tray under the mouse lifts and glows */
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  let hoverDirty = false;
+
+  /* the log-in form talks to the scene: typing, focus, error, success */
+  const fx = { push: 0, err: 0, go: 0, goStart: 0, shake: 0 };
+  const danger = new THREE.Color(css('--danger') || '#D64545');
+  window.RS_SCENE = {
+    typing(){ hopAt = 0; },
+    focus(on){ fx.push = on ? 1 : 0; },
+    error(){ fx.err = 1; fx.shake = 1; },
+    success(){ fx.go = 1; fx.goStart = performance.now(); return new Promise(r => setTimeout(r, still ? 0 : 900)); },
+  };
+
   /* framing: racks to the right of the log-in window on a wide screen */
-  const pointer = { x: 0, y: 0, sx: 0, sy: 0 };
-  window.addEventListener('pointermove', e => { pointer.x = e.clientX / innerWidth - 0.5; pointer.y = e.clientY / innerHeight - 0.5; }, { passive: true });
+  const pointer = { x: 0, y: 0, sx: 0, sy: 0, cx: -1, cy: -1 };
+  window.addEventListener('pointermove', e => { pointer.x = e.clientX / innerWidth - 0.5; pointer.y = e.clientY / innerHeight - 0.5; pointer.cx = e.clientX; pointer.cy = e.clientY; hoverDirty = true; }, { passive: true });
   function resize(){
     const w = innerWidth, h = innerHeight;
     renderer.setSize(w, h, false); camera.aspect = w / h;
@@ -260,23 +341,55 @@
 
   const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const t0 = performance.now();
-  let first = true;
+  let first = true, introDone = still, push = 0, err = 0;
+  const guideCol = new THREE.Color(), camPos = new THREE.Vector3(), look = new THREE.Vector3();
   function frame(now){
     const t = still ? 6 : (now - t0) / 1000;
     pointer.sx += (pointer.x - pointer.sx) * 0.04; pointer.sy += (pointer.y - pointer.sy) * 0.04;
-    const a = 0.6 + Math.sin(t * 0.07) * 0.3 + pointer.sx * 0.16, r = 12.5;
-    camera.position.set(Math.sin(a) * r, 3.6 + Math.sin(t * 0.11) * 0.2 - pointer.sy * 0.5, Math.cos(a) * r);
-    camera.lookAt(0, 1.1, 0);
-    if (t > hopAt){ setLit(ti, 0); fi = ti; do { ti = Math.floor(rnd() * trays.length); } while (ti === fi && trays.length > 1); hopAt = t + HOP; }
+
+    /* trays drop in, then the hovered one lifts */
+    if (!introDone){ for (let i = 0; i < trays.length; i++) placeTray(i, t); inst.instanceMatrix.needsUpdate = true; if (t > 3) introDone = true; }
+    if (introDone && hoverDirty && pointer.cx >= 0){
+      hoverDirty = false;
+      ndc.set(pointer.cx / innerWidth * 2 - 1, -(pointer.cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+      const hit = ray.intersectObject(inst)[0], h = hit ? hit.instanceId : -1;
+      if (h !== hover){ if (hover >= 0){ placeTray(hover, 99); if (hover !== ti) setLit(hover, 0); } hover = h; if (hover >= 0){ placeTray(hover, 99, 0.05); setLit(hover, 0.45); } inst.instanceMatrix.needsUpdate = true; }
+    }
+
+    /* camera: fly in from far and high, then a slow drift; focus pushes in; success dives to the lit tray */
+    const intro = still ? 1 : Math.min(1, t / 2.4), ie = 1 - Math.pow(1 - intro, 3);
+    push += (fx.push - push) * 0.06; err += (fx.err - err) * 0.08; fx.err *= 0.96;
+    const a = 0.6 + Math.sin(t * 0.07) * 0.3 + pointer.sx * 0.16 + (1 - ie) * 0.9;
+    const r = 12.5 - push * 1.4 + (1 - ie) * 10;
+    camPos.set(Math.sin(a) * r, 3.6 + Math.sin(t * 0.11) * 0.2 - pointer.sy * 0.5 + (1 - ie) * 6, Math.cos(a) * r);
+    look.set(0, 1.1, 0);
+    if (fx.shake > 0.01){ camPos.x += (Math.random() - 0.5) * 0.12 * fx.shake; camPos.y += (Math.random() - 0.5) * 0.08 * fx.shake; fx.shake *= 0.9; }
+
+    /* guide light hops from tray to tray (typing makes it hop at once) */
+    if (t > hopAt && introDone){ if (ti !== hover) setLit(ti, 0); fi = ti; do { ti = Math.floor(rnd() * trays.length); } while (ti === fi && trays.length > 1); hopAt = t + HOP; }
     const k = Math.min(1, (t - (hopAt - HOP)) / MOVE), e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
     const A = trays[fi], B = trays[ti];
     const x = A.x + (B.x - A.x) * e, z = A.z + (B.z - A.z) * e, y = A.y + (B.y - A.y) * e, top = y + TRAY_H / 2 + 0.004, len = 3.4 - top;
     beam.scale.y = len; beam.position.set(x, top + len / 2, z);
-    const pulse = 0.5 + 0.5 * Math.sin(t * 3.2);
+    const pulse = 0.5 + 0.5 * Math.sin(t * 3.2), on = introDone ? 1 : Math.max(0, (t - 2.2) / 0.8);
     ring.position.set(x, top + 0.005, z); ring.scale.setScalar(1 + pulse * 0.15);
-    halo.position.set(x, top + 0.003, z); halo.material.opacity = (dark ? 0.6 : 0.4) + pulse * 0.3;
-    guideGlow.position.set(x, top + 0.45, z);
-    if (k >= 1) setLit(ti, 0.25 + pulse * 0.25);
+    halo.position.set(x, top + 0.003, z); halo.material.opacity = ((dark ? 0.6 : 0.4) + pulse * 0.3) * on;
+    beam.material.opacity = (dark ? 0.75 : 0.55) * on; ring.visible = on > 0.5;
+    guideCol.copy(C.brand).lerp(danger, Math.min(1, err * 1.4));
+    beam.material.color.copy(guideCol); halo.material.color.copy(guideCol); ring.material.color.copy(err > 0.2 ? danger : (dark ? C.brand : C.brandStrong)); guideGlow.color.copy(guideCol);
+    guideGlow.position.set(x, top + 0.45, z); guideGlow.intensity = (dark ? 1.8 : 1.1) * on;
+    if (k >= 1 && introDone && ti !== hover) setLit(ti, 0.25 + pulse * 0.25);
+
+    /* scanner sweep every 8 s */
+    const sp = (t % 8) / 2.2;
+    if (sp < 1 && introDone){ scan.position.x = -SPAN + sp * SPAN * 2; scan.material.opacity = Math.sin(sp * Math.PI) * (dark ? 0.55 : 0.35); } else scan.material.opacity = 0;
+
+    if (fx.go){
+      const g = Math.min(1, (now - fx.goStart) / 850), ge = g * g * (3 - 2 * g);
+      camPos.lerp(new THREE.Vector3(x + 1.2, top + 0.6, z + 2.2), ge); look.lerp(new THREE.Vector3(x, top, z), ge);
+      canvas.style.opacity = String(1 - Math.max(0, g - 0.6) / 0.4);
+    }
+    camera.position.copy(camPos); camera.lookAt(look);
     renderer.render(scene, camera);
     if (first){ first = false; canvas.classList.add('on'); }
     if (!still && !document.hidden) requestAnimationFrame(frame);

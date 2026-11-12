@@ -1,0 +1,8 @@
+{
+  "name": "resonance-store-tests",
+  "private": true,
+  "description": "Automated tests for the Resonance Store web app (API, 2-PC end-to-end, UI). Uses Microsoft Edge through playwright-core.",
+  "dependencies": {
+    "playwright-core": "^1.48.0"
+  }
+}

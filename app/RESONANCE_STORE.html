@@ -17,7 +17,7 @@
 <!-- ===================== SIDEBAR ===================== -->
 <aside class="sidebar" aria-label="เมนูหลัก">
   <div class="brand">
-    <div class="logo" aria-hidden="true"><span></span><span></span><span></span></div>
+    <a class="logo lab" id="homeLogo" href="#" title="กลับหน้าหลัก" aria-label="กลับหน้าหลัก (ภาพรวม)"></a>
     <div class="brand-text"><h1>Resonance Store</h1><p>HSA Resonance Lab</p></div>
   </div>
   <nav class="tabs" id="tabs" role="tablist" aria-label="มุมมอง" aria-orientation="vertical">
@@ -558,6 +558,14 @@
 
 <div id="toastContainer" class="toast-container"></div>
 
+<script>
+/* lab logo = back to the main page (ภาพรวม), from any tab */
+document.getElementById('homeLogo').addEventListener('click', function(e){
+  e.preventDefault();
+  var t = document.querySelector('#tabs [data-tab="overview"]'); if (t) t.click();
+  window.scrollTo({ top: 0, behavior: 'smooth' }); var m = document.querySelector('.main-col'); if (m && m.scrollTo) m.scrollTo({ top: 0, behavior: 'smooth' });
+});
+</script>
 <!-- sync.js pulls the shared data from the server first, then loads app.js -->
 <script src="sync.js"></script>
 </body>

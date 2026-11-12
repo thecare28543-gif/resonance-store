@@ -6,6 +6,8 @@ Web app for the HSA Resonance lab store (Seagate Korat): where every tested job 
 - **Original author:** Sirinya Mungjuntuek (HSA Resonance), 2026. Kaizen project "RESONANCE STORE 4.0".
 - **Owner after hand-over:** _fill in: Dev team / person and backup person_
 
+> **Start here (Thai):** `คู่มือระบบ_Resonance_Store_สำหรับ_Dev.pdf` — the whole system in one book (what it does, architecture, screens, files, business rules, data, deploy, operations, security, how to change / test / release, known issues, every other document).
+
 ## What is in this folder
 
 | Path | What it is |
@@ -58,3 +60,7 @@ git push -u origin main
 ```
 
 `.gitignore` already keeps live data, backups and the lab's Excel/CSV files out of the repository.
+
+## Extra tools (2026-11-12)
+- `app/deploy/move-kit/` - move the whole system (app + database + users) to a new PC with one double-click. See its README.
+- `tools/single-file/` - build one self-contained HTML that runs without a server (offline demo / single PC). See its README.

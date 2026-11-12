@@ -2,6 +2,13 @@
 
 Newest first. One line per release: date · who · what · why.
 
+## 2026-11-12 · Sirinya Mungjuntuek · lab logo, start-server.bat, move kit, single-file build (app.js / sync.js unchanged, VER stays 2026.11.11)
+- **Lab logo:** the 3-bar mark is replaced by the lab logo, embedded as a data-URI in `app/styles.css` (`.logo.lab`). The sidebar logo (`#homeLogo`) goes back to the main page (ภาพรวม tab, scroll to top); users.html links it to `/`; login.html shows it without a link.
+- **start-server.bat:** reads the port from `server-config.json` (default 8081); starts `deployun-server.vbs` only if nothing is listening, waits up to 20 s, then opens `/login.html`. CRLF line endings.
+- **Move kit** (`app/deploy/move-kit/`): `INSTALL.bat` + `install_new_pc.ps1` install the whole system on a new PC from a copy of the app folder and a `pg_dump` of the database (new random rs_app password, auto-start, firewall, never overwrites).
+- **Single-file build** (`tools/single-file/`): one HTML that runs without a server, with a browser-side copy of the log-in (GID / GID, roles, lock-out) and user admin. Not real security; the server version stays the real system.
+- Tests: auth_api 43/43, e2e 24/24, ui_login 14/14; single-file login 19/19.
+
 ## 2026-11-11 · Sirinya Mungjuntuek · release 2026.11.11: PostgreSQL + log-in + user accounts
 - **PostgreSQL:** all shared data moves from the JSON file to PostgreSQL (`app/db/schema.sql`). `rs_kv` is the master copy (same sync protocol, 3-way merge unchanged); readable tables `store_rows`, `jobs`, `holds`, `hold_log`, `dispose_decisions`, `zones`, `training_attempts` are rebuilt on every save for reports / pgAdmin; views `v_position_load`, `v_jobs_in_store`, `v_users`. Backups go to table `rs_backups` (+ optional file copy). An old `data/resonance-data.json` is imported automatically on first start.
 - **Log-in:** user name = GID, password = the same GID (lab decision), stored only as an scrypt hash. Session cookie 12 h (HttpOnly, SameSite=Strict, Secure on https). 5 wrong tries lock the account 15 min. Writes need a custom header (CSRF guard). The log-in page shows nothing about the system and its errors are generic. First admin is created with a one-time setup code from the server log.
@@ -11,6 +18,8 @@ Newest first. One line per release: date · who · what · why.
 - Also in 2026.11.10–11: save-race 3-way merge, Hold rows locked in Data Entry, Reset/Import keep held jobs, 80-piece cap in Data Entry, Undo/Redo only this PC's rows, version chip + old-version warning (`X-RS-Ver`), tray placement picture, Tester 01/02/03 labels, editable Jobs table.
 - Deploy: `npm install` in `app/`, run `db/01_create_user_and_db.sql` + `db/schema.sql` in pgAdmin (see `db/วิธีตั้งค่าฐานข้อมูล.md`), fill `server-config.json`, then `deploy/2-install-autostart.bat`.
 - Tests: API 43/43, 2-PC end-to-end with log-in 24/24, UI 14/14.
+- Hand-over docs (Thai): `คู่มือระบบ_Resonance_Store_สำหรับ_Dev.pdf` (master book), database manual (detailed + summary PDF), `docs/กฎของงาน_Business_Rules.md`, `docs/ปัญหาที่รู้_และงานค้าง.md`; `docs/CHANGE_GUIDE.md` updated for log-in / PostgreSQL; automated tests now shipped in `tests/` with `run-tests.ps1` (throw-away PostgreSQL, made-up data only).
+- Fix: view `v_position_load` now says WARNING from 60 pieces, the same as `WARN_AT` in the app (was 64).
 
 ## 2026-11-10 · Sirinya Mungjuntuek · release 2026.11.10 + server live
 - **Server is live:** the Dev team has deployed `server.js` on a company server with https. Every lab PC now opens the app from the server URL; data is shared and backed up there.

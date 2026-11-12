@@ -172,11 +172,13 @@ const adminLog = (admin, target, action, detail) => q('INSERT INTO user_admin_lo
 
 /* first admin: only while there is no active admin, and only with the one-time token printed in the server log */
 let setupToken = '';
+// Lab decision 2026-11-12: fixed first-admin setup code 'LDV' (env RS_SETUP_TOKEN overrides it). Only works while no admin exists.
+const DEFAULT_SETUP_TOKEN = 'LDV';
 async function checkSetup(){
   const n = Number((await q(`SELECT count(*) FROM app_users WHERE role = 'admin' AND active`)).rows[0].count);
   if (n){ setupToken = ''; try { fs.unlinkSync(path.join(DATA_DIR, 'setup-token.txt')); } catch {} return false; }
   if (!setupToken){
-    setupToken = process.env.RS_SETUP_TOKEN || crypto.randomBytes(9).toString('base64url');
+    setupToken = process.env.RS_SETUP_TOKEN || DEFAULT_SETUP_TOKEN;
     fs.mkdirSync(DATA_DIR, { recursive: true });
     fs.writeFileSync(path.join(DATA_DIR, 'setup-token.txt'), setupToken + '\n');
     log(`NO ADMIN YET · open /login.html and create the first admin with setup code: ${setupToken}  (also in ${path.join(DATA_DIR, 'setup-token.txt')})`);

@@ -23,7 +23,7 @@ Thai step-by-step for pgAdmin: `app/db/วิธีตั้งค่าฐา�
 3. pgAdmin → database `resonance_store` → Query Tool → first line `SET ROLE rs_app;`, then run `db/schema.sql`. (Or skip: the server creates the tables on its first start.)
 4. Copy `server-config.example.json` to `server-config.json`, fill `database.password`. Or set `DATABASE_URL=postgres://rs_app:<pw>@host:5432/resonance_store` instead.
 5. In the app folder: `npm install`, then `deploy\2-install-autostart.bat` (or run `node server.js` as a service with NSSM / pm2).
-6. The server log prints `NO ADMIN YET … setup code: xxxx` (also in `data/setup-token.txt`). Open the site, enter the setup code + the admin's GID + name. That admin then logs in with **GID / GID**.
+6. The server log prints `NO ADMIN YET … setup code: LDV` (also in `data/setup-token.txt`). Open the site, enter the setup code + the admin's GID + name. That admin then logs in with **GID / GID**.
 7. Put it behind the company reverse proxy (IIS ARR / nginx) with **https**. Keep `secureCookie: "auto"` and let the proxy send `X-Forwarded-Proto: https`.
 8. Moving from the old JSON server: put the old `data/resonance-data.json` in the new `data/` folder before the first start; it is imported once. Or log in as admin → status chip → Backup & Restore → **⬆ กู้คืนจากไฟล์**.
 
@@ -34,7 +34,7 @@ Thai step-by-step for pgAdmin: `app/db/วิธีตั้งค่าฐา�
 ```
 `PORT`, `RS_DATA_DIR`, `DATABASE_URL` and `RS_SETUP_TOKEN` environment variables override the file.
 
-**Choosing the setup code yourself:** set `RS_SETUP_TOKEN` before the server starts and the first-admin page accepts that value instead of a random one (Windows: `[Environment]::SetEnvironmentVariable('RS_SETUP_TOKEN','<code>','User')`, then stop `wscript.exe` + `node.exe` and run the Task again so the new variable is picked up). It only matters while no admin exists. Do not commit the real value: this repo is public.
+**Default setup code = `LDV`** (lab decision, set in server.js). To use another one, set `RS_SETUP_TOKEN` before the server starts and the first-admin page accepts that value instead of a random one (Windows: `[Environment]::SetEnvironmentVariable('RS_SETUP_TOKEN','<code>','User')`, then stop `wscript.exe` + `node.exe` and run the Task again so the new variable is picked up). It only matters while no admin exists. Because `LDV` is in this public repo, create the first admin right after deploying.
 
 ## Log-in and roles
 - **Log-in rule (lab decision, 2026-11-11):** user name = the person's GID, password = the same GID. Stored only as an scrypt hash. Anyone who knows a GID can log in as that person, so the WI tells everyone to log out before leaving a shared PC; the log-in history shows who logged in from where.

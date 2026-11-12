@@ -34,6 +34,8 @@ Thai step-by-step for pgAdmin: `app/db/วิธีตั้งค่าฐา�
 ```
 `PORT`, `RS_DATA_DIR`, `DATABASE_URL` and `RS_SETUP_TOKEN` environment variables override the file.
 
+**Choosing the setup code yourself:** set `RS_SETUP_TOKEN` before the server starts and the first-admin page accepts that value instead of a random one (Windows: `[Environment]::SetEnvironmentVariable('RS_SETUP_TOKEN','<code>','User')`, then stop `wscript.exe` + `node.exe` and run the Task again so the new variable is picked up). It only matters while no admin exists. Do not commit the real value: this repo is public.
+
 ## Log-in and roles
 - **Log-in rule (lab decision, 2026-11-11):** user name = the person's GID, password = the same GID. Stored only as an scrypt hash. Anyone who knows a GID can log in as that person, so the WI tells everyone to log out before leaving a shared PC; the log-in history shows who logged in from where.
 - **Session:** cookie `rs_sid`, HttpOnly, SameSite=Strict, Secure on https, 12 h (`sessionHours`).

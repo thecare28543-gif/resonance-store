@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คู่มืออบรม Resonance Store</title>
+<style>
+:root{--ink:#15212B;--muted:#5B6672;--line:#cfd6db;--brand:#6EBE49;--strong:#2D7C31;--bg:#F4F7F5;--card:#fff}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);font-family:Tahoma,"Leelawadee UI",sans-serif;color:var(--ink);font-size:16px;line-height:1.65}
+.bar{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;padding:10px 16px;background:#0F161D;color:#fff}
+.bar b{flex:1;font-size:15px}
+.bar a,.bar button{font:inherit;font-size:14px;color:#fff;background:#24313c;border:0;border-radius:999px;padding:7px 14px;text-decoration:none;cursor:pointer;min-height:36px}
+.bar a:hover,.bar button:hover{background:var(--strong)}
+.embedded .bar{display:none}
+.wrap{max-width:920px;margin:0 auto;padding:20px 16px 48px}
+nav.toc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 18px;margin:0 0 16px}
+nav.toc b{display:block;margin-bottom:4px}
+nav.toc ol{margin:0;padding-left:22px;columns:2;column-gap:28px} nav.toc a{color:var(--strong);text-decoration:none} nav.toc a:hover{text-decoration:underline}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin:0 0 16px;scroll-margin-top:64px}
+h1{font-size:30px;color:var(--strong);margin:0} h2{font-size:22px;color:var(--strong);border-bottom:3px solid var(--brand);padding-bottom:4px;margin:0 0 10px}
+h3{font-size:17px;margin:16px 0 4px}
+.cover{display:flex;flex-direction:column;gap:8px;background:linear-gradient(135deg,#fff 60%,#ECF7E6)}
+.cover .k{color:var(--brand);font-weight:800;letter-spacing:.15em;font-size:13px}
+.cover p{font-size:17px;margin:0;color:#3d4a55}
+.box{border-radius:10px;padding:10px 14px;margin:10px 0}
+.rule{background:#ECF7E6;border:1.5px solid var(--brand)} .warn{background:#FFF4E0;border:1.5px solid #E08A00} .stop{background:#FDE7E7;border:1.5px solid #D64545}
+.box b.t{display:block;margin-bottom:4px}
+ol.steps{padding-left:24px;margin:6px 0} ol.steps li{margin:4px 0}
+figure{margin:12px 0}
+figure.nopic a{display:none} figure.nopic figcaption{border:1.5px dashed var(--line);border-radius:8px;padding:10px 12px;background:#FAFBFA}
+figure.nopic figcaption::before{content:"🖼 ภาพประกอบดูได้ในคู่มือ PDF · ";color:var(--strong);font-weight:700} figure img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:8px} figcaption{font-size:13px;color:var(--muted);margin-top:4px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:15px;margin:8px 0} th,td{border:1px solid #c9d1d6;padding:7px 9px;text-align:left;vertical-align:top} th{background:#F1F5F2}
+.chip{display:inline-block;padding:1px 9px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap}
+.g{background:#E3F4DA;color:#2D7C31} .o{background:#FFF0D6;color:#A35E00} .gr{background:#E6EAED;color:#4A5866}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.sign td{height:30px}
+.foot{text-align:center;color:var(--muted);font-size:13px}
+@media (max-width:680px){.two{grid-template-columns:1fr} nav.toc ol{columns:1} body{font-size:15px} section{padding:14px 14px} h1{font-size:24px}}
+@media print{
+  @page{size:A4;margin:14mm 15mm 16mm}
+  body{background:#fff;font-size:12pt} .bar,nav.toc,.foot{display:none} .wrap{max-width:none;padding:0}
+  section{border:0;border-radius:0;padding:0;margin:0;break-before:page} section.first{break-before:auto}
+  .cover{min-height:250mm;justify-content:center;background:none}
+  figure{break-inside:avoid} h2{break-after:avoid} figure img{max-height:120mm;object-fit:contain}
+}
+</style></head>
+<body>
+<div class="bar"><b>📖 คู่มืออบรม Resonance Store</b><a href="RESONANCE_STORE.html">← กลับเข้าแอป</a><button type="button" onclick="print()">🖨 พิมพ์</button></div>
+<main class="wrap">
+<nav class="toc"><b>สารบัญ</b><ol><li><a href="#m1">แอปนี้ช่วยอะไร และเริ่มใช้งาน</a></li><li><a href="#m2">รับงานเข้า Store</a></li><li><a href="#m3">หางาน (เจ้าของงานขอคืน)</a></li><li><a href="#m4">หยิบงานออก ด้วย Pick List</a></li><li><a href="#m5">งาน HOLD (ห้าม Scrap)</a></li><li><a href="#m6">เมื่อระบบมีปัญหา และการแก้ไขที่ผิด</a></li><li><a href="#m7">ขั้นตอนอบรมและสอบ (สำหรับผู้สอน)</a></li><li><a href="#m8">ภาคปฏิบัติ 5 ข้อ (ใช้เป็นเช็กลิสต์ตอนสอน)</a></li></ol></nav>
+<section class="first cover">
+  <div class="k">HSA RESONANCE LAB · คู่มืออบรม</div>
+  <h1>การใช้งาน Resonance Store</h1>
+  <p>สำหรับพนักงานทั้ง 3 กะ (A · B · C)</p>
+  <p style="margin-top:18px">ใช้เวลาอบรมประมาณ <b>30 นาที/คน</b>: อธิบาย 10 นาที · ฝึกบนหน้าจอจริง 15 นาที · ทำแบบทดสอบ 5 นาที</p>
+  <p>เกณฑ์ผ่าน: <b>ภาคปฏิบัติครบ 5 ข้อ</b> และ <b>แบบทดสอบ 8/10 ข้อขึ้นไป</b> · บันทึกผลในแอป เมนู "อบรม"</p>
+  <div class="box rule" style="margin-top:20px"><b class="t">กฎทอง 5 ข้อ</b>
+    ① ใส่ชื่อตัวเองในช่อง "ผู้บันทึก" ก่อนทำงานทุกครั้ง<br>
+    ② วางงานตามช่องที่ระบบแนะนำ (สีเขียว) แล้วกด ✓ วางแล้ว<br>
+    ③ หางานด้วยการพิมพ์ Job No. ไม่ต้องเดินหา<br>
+    ④ งาน HOLD ห้าม Scrap ห้ามหยิบ ห้ามลบ ระบบจะกันไว้<br>
+    ⑤ ระบบมีปัญหา ใช้ผังกระดาษ แล้วคีย์ย้อนหลัง</div>
+</section>
+
+<section id="m1">
+  <h2>1. แอปนี้ช่วยอะไร และเริ่มใช้งาน</h2>
+  <p>Resonance Store บอกว่างานแต่ละงานอยู่ช่องไหนของ Rack A / B (24 ช่อง ช่องละไม่เกิน 80 ชิ้น) · งานไหนติด Hold · งานไหนค้างนาน ทุกเครื่องในแลปเห็นข้อมูลชุดเดียวกัน</p>
+  <h3>เปิดใช้งาน</h3>
+  <ol class="steps"><li>เปิด Edge แล้วเข้าที่อยู่ของ server ที่หัวหน้ากำหนด (ทางลัดบนหน้าจอ)</li><li>พิมพ์<b>ชื่อของคุณ</b>ในช่อง <b>"ผู้บันทึก"</b> ทุกการแก้ไขจะมีชื่อคุณกำกับ</li><li>ดู<b>ป้ายสถานะ</b>มุมบน ต้องเป็นสีเขียว "ซิงก์แล้ว · ทุกเครื่องเห็นตรงกัน"</li></ol>
+  <figure><a href="manual/01-top.png" target="_blank" rel="noopener"><img src="manual/01-top.png" width="1800" height="285" alt="แถบด้านบน: ป้ายสถานะการบันทึก · กะที่กำลังทำงาน · เวลาอัปเดตล่าสุด" onerror="this.closest('figure').classList.add('nopic')"></a><figcaption>แถบด้านบน: ป้ายสถานะการบันทึก · กะที่กำลังทำงาน · เวลาอัปเดตล่าสุด</figcaption></figure>
+  <div class="tw"><table><tr><th>ป้ายสถานะ</th><th>ความหมาย</th><th>ต้องทำอะไร</th></tr>
+    <tr><td><span class="chip g">ซิงก์แล้ว</span></td><td>ปกติ ทุกเครื่องเห็นตรงกัน</td><td>ทำงานได้เลย</td></tr>
+    <tr><td><span class="chip o">ออฟไลน์ · เก็บในเครื่องนี้</span></td><td>เชื่อม server ไม่ได้ชั่วคราว</td><td>ทำงานต่อได้ ข้อมูลส่งขึ้นเองเมื่อกลับมา · ถ้านานเกิน 15 นาที แจ้งผู้ดูแลระบบ</td></tr>
+    <tr><td><span class="chip gr">โหมดเครื่องเดียว</span></td><td>เปิดผิดที่ (เปิดเป็นไฟล์)</td><td>ปิดแล้วเปิดใหม่จากทางลัดของ server</td></tr></table></div>
+</section>
+
+<section id="m2">
+  <h2>2. รับงานเข้า Store</h2>
+  <ol class="steps"><li>กด <b>+ รับงานเข้า</b> (หน้า ภาพรวม)</li><li>กรอก <b>Job No. · Type · Product · จำนวน</b> และเลือก <b>มาจาก Tester</b></li><li>กด <b>✦ แนะนำช่อง (Smart)</b> ระบบเลือกช่องที่ถูกโซน มีที่พอ และใกล้ Tester ให้ 3 อันดับ</li><li>เลือกอันดับ 1 (หรือช่องที่เหมาะ) แล้วกด <b>+ เพิ่มงานเข้า Store</b></li><li>เดินไปวางถาดตาม<b>ไฮไลต์สีเขียว</b>บนจอ แล้วกด <b>✓ วางแล้ว</b> ไฮไลต์จะดับ</li></ol>
+  <figure><a href="manual/02-add.png" target="_blank" rel="noopener"><img src="manual/02-add.png" width="1728" height="921" alt="ฟอร์มรับงานเข้า: ระบบแนะนำ 3 ช่อง พร้อมบอกโซน ระยะเดิน และจำนวนหลังวาง" onerror="this.closest('figure').classList.add('nopic')"></a><figcaption>ฟอร์มรับงานเข้า: ระบบแนะนำ 3 ช่อง พร้อมบอกโซน ระยะเดิน และจำนวนหลังวาง</figcaption></figure>
+  <div class="box stop"><b class="t">ระบบจะไม่บันทึกถ้า…</b>วางผิดโซน (Product / Type ไม่ตรงกับช่อง) · หรือทำให้ช่องเกิน 80 ชิ้น → เลือกช่องใหม่ หรือกด ✦ แนะนำช่อง</div>
+  <div class="box warn"><b class="t">งานนี้ติด Hold ตั้งแต่รับเข้า?</b>เปิดสวิตช์ "งานนี้ติด HOLD (ห้าม Scrap)" ในฟอร์ม ระบบจะส่งงานไปโซน HOLD</div>
+  <p style="font-size:10.5pt;color:#5B6672">หมายเหตุ: ปุ่ม ⌗ และสวิตช์ "สแกนยืนยันช่องก่อนบันทึก" เป็นของเฟสสแกน QR ซึ่งยังไม่เริ่มใช้ (รอเครื่องสแกนที่ผ่านกฎคลีนรูม) ตอนนี้ไม่ต้องใช้</p>
+</section>
+
+<section id="m3">
+  <h2>3. หางาน (เจ้าของงานขอคืน)</h2>
+  <ol class="steps"><li>ไปที่เมนู <b>3D Store</b></li><li>พิมพ์ <b>Job No.</b> ในช่องค้นหาแล้วกด <b>Enter</b></li><li>ระบบบินไปที่ช่องนั้น ไฮไลต์สีเหลือง และบอก <b>Rack · ชั้น · ช่อง · จำนวน</b></li><li>เดินไปหยิบที่ช่องนั้นได้เลย ไม่ต้องเดินหาทีละชั้น</li></ol>
+  <figure><a href="manual/03-find.png" target="_blank" rel="noopener"><img src="manual/03-find.png" width="1800" height="1350" alt="ค้นหาด้วย Job No. → พบ 5 ชิ้น ที่ B-L ชั้น 2 IN (ไฮไลต์สีเหลือง)" onerror="this.closest('figure').classList.add('nopic')"></a><figcaption>ค้นหาด้วย Job No. → พบ 5 ชิ้น ที่ B-L ชั้น 2 IN (ไฮไลต์สีเหลือง)</figcaption></figure>
+</section>
+
+<section id="m4">
+  <h2>4. หยิบงานออก ด้วย Pick List</h2>
+  <ol class="steps"><li>กด <b>หยิบงานออก</b> (หรือ Pick List ในหน้า 3D)</li><li>ใส่ Job ที่ต้องหยิบ (หลายงานคั่นด้วย , ได้) หรือเลือก "ตามเจ้าของงาน"</li><li>ระบบไฮไลต์<b>สีส้ม</b>ทุกจุด เรียงลำดับตาม<b>ทางเดินสั้นที่สุด</b>จาก Tester</li><li>หยิบทีละจุด แล้ว<b>ติ๊ก</b>ในรายการ ไฮไลต์จุดนั้นจะดับ</li><li>ครบแล้วกด <b>นำออกที่ติ๊ก</b> ระบบบันทึกการนำออกให้อัตโนมัติ</li></ol>
+  <figure><a href="manual/04-pick.png" target="_blank" rel="noopener"><img src="manual/04-pick.png" width="1800" height="1350" alt="Pick List 2 งาน: จุด 1 A-R ชั้น 1 OUT → จุด 2 A-R ชั้น 2 OUT · ป้ายแดงบอกจำนวนวันที่อยู่ใน Store" onerror="this.closest('figure').classList.add('nopic')"></a><figcaption>Pick List 2 งาน: จุด 1 A-R ชั้น 1 OUT → จุด 2 A-R ชั้น 2 OUT · ป้ายแดงบอกจำนวนวันที่อยู่ใน Store</figcaption></figure>
+  <div class="box stop"><b class="t">งาน HOLD</b>ติ๊กหยิบไม่ได้ ระบบล็อกไว้ ต้องปลด Hold ก่อน</div>
+</section>
+
+<section id="m5">
+  <h2>5. งาน HOLD (ห้าม Scrap)</h2>
+  <div class="two"><div>
+    <h3>ติด Hold</h3>
+    <ol class="steps"><li>ไปที่เมนู <b>Jobs</b> หาแถวของงาน</li><li>กดปุ่ม <b>ติด Hold</b> (เมื่อติดแล้วปุ่มจะเปลี่ยนเป็น 🔒 HOLD)</li><li>ใส่ <b>ชื่อผู้ติด Hold</b> และ <b>เหตุผล</b> (บังคับ)</li><li>กด <b>ติด Hold</b> งานขึ้นป้ายแดงทุกหน้าจอ และติด<b>ป้าย HOLD สีแดง</b>ที่ตัวงาน</li></ol>
+    <h3>ปลด Hold</h3>
+    <ol class="steps"><li>กดปุ่ม <b>🔒 HOLD</b> ที่งานนั้น (หรือ <b>ปลด</b> ในแผงงาน Hold หน้าภาพรวม)</li><li>ใส่ <b>ชื่อผู้อนุมัติ</b> และ <b>เหตุผล</b> (บังคับ)</li><li>ทุกครั้งบันทึกใน Audit Log ตรวจย้อนหลังได้</li></ol>
+  </div><div><figure><a href="manual/05-hold.png" target="_blank" rel="noopener"><img src="manual/05-hold.png" width="738" height="551" alt="หน้าต่างติด Hold: ต้องมีชื่อและเหตุผลเสมอ" onerror="this.closest('figure').classList.add('nopic')"></a><figcaption>หน้าต่างติด Hold: ต้องมีชื่อและเหตุผลเสมอ</figcaption></figure></div></div>
+  <div class="box stop"><b class="t">งาน Hold ทำไม่ได้ทั้ง 3 อย่าง</b>Scrap ✗ · หยิบออก ✗ · ลบ ✗ — ถ้ามีคนพยายาม ระบบจะเด้งกลับ และนับเป็นครั้งที่ "ระบบกันได้"</div>
+  <div class="box rule"><b class="t">ตรวจทุกกะ (Roving audit)</b>ทุกกะตรวจว่างาน Hold อยู่ครบและมีป้ายแดง แล้วบันทึกผลในเมนู Insights ส่วน Cycle Count (ตรวจงาน Hold ประจำกะ)</div>
+</section>
+
+<section id="m6">
+  <h2>6. เมื่อระบบมีปัญหา และการแก้ไขที่ผิด</h2>
+  <div class="tw"><table><tr><th>เหตุการณ์</th><th>ทำแบบนี้</th></tr>
+    <tr><td>บันทึกผิดเมื่อสักครู่</td><td>กด <b>↶ ย้อน</b> (ย้อนได้หลายครั้ง) · กด ↷ เพื่อทำซ้ำ</td></tr>
+    <tr><td>ป้ายขึ้น "ออฟไลน์"</td><td>ทำงานต่อได้ ข้อมูลจะส่งขึ้นเอง · ถ้านานเกิน 15 นาที แจ้งผู้ดูแลระบบ</td></tr>
+    <tr><td>คอมดับ / ระบบใช้ไม่ได้นาน</td><td>ใช้<b>ผังกระดาษ</b>ที่พิมพ์ไว้ทุกกะ · จดงานเข้า–ออก (Job, ช่อง, จำนวน, เวลา, ชื่อ) · คีย์เข้าระบบเมื่อกลับมา</td></tr>
+    <tr><td>หางานไม่เจอในระบบ</td><td>ค้นด้วยเลขบางส่วน หรือ Product · ถ้ายังไม่เจอ แจ้งหัวหน้ากะ ห้ามเดาตำแหน่ง</td></tr>
+    <tr><td>งานค้าง ≥ 14 วัน</td><td>ระบบขึ้นรายการ "งานค้าง ≥ 14 วัน · แจ้งเจ้าของงาน" ในเมนู Insights · ส่งอีเมลแจ้ง Owner ให้คืนหรือตัดสินใจ</td></tr></table></div>
+  <figure style="max-width:82%"><a href="manual/06-backup.png" target="_blank" rel="noopener"><img src="manual/06-backup.png" width="1098" height="845" alt="กดที่ป้ายสถานะ → ดู Backup ที่ระบบเก็บให้อัตโนมัติ (ทุกชั่วโมง + ทุกเปลี่ยนกะ) · ผู้ดูแลระบบใช้หน้านี้กู้คืนข้อมูล" onerror="this.closest('figure').classList.add('nopic')"></a><figcaption>กดที่ป้ายสถานะ → ดู Backup ที่ระบบเก็บให้อัตโนมัติ (ทุกชั่วโมง + ทุกเปลี่ยนกะ) · ผู้ดูแลระบบใช้หน้านี้กู้คืนข้อมูล</figcaption></figure>
+</section>
+
+<section id="m7">
+  <h2>7. ขั้นตอนอบรมและสอบ (สำหรับผู้สอน)</h2>
+  <ol class="steps"><li>อธิบายหัวข้อ 1–6 ของคู่มือนี้ (10 นาที)</li><li>ให้ผู้อบรม<b>ทำจริงบนหน้าจอ</b>ทีละข้อตามภาคปฏิบัติ 5 ข้อ (15 นาที) · ใช้ Job ทดสอบ แล้วกด ↶ ย้อน หลังฝึก</li><li>เปิดเมนู <b>อบรม</b> กรอกชื่อ รหัสพนักงาน กะ และชื่อผู้สอน แล้ว<b>ติ๊กภาคปฏิบัติ</b>ข้อที่ทำได้จริง</li><li>กด <b>เริ่มทำแบบทดสอบ</b> ให้ผู้อบรมตอบ 10 ข้อเอง (สุ่มจาก 14 ข้อ ไม่ซ้ำกันทุกคน)</li><li>ผ่าน = <b>8/10 ขึ้นไป + ภาคปฏิบัติครบ</b> · ไม่ผ่าน ระบบแสดงข้อที่ผิดพร้อมคำอธิบาย ให้ทบทวนแล้ว<b>สอบใหม่</b></li><li>จบรอบอบรม กด <b>พิมพ์ใบบันทึกการอบรม</b> ให้ผู้อบรมและผู้สอนเซ็น เก็บเข้าแฟ้ม</li></ol>
+  <figure style="max-width:78%"><a href="manual/07-train-form.png" target="_blank" rel="noopener"><img src="manual/07-train-form.png" width="1728" height="681" alt="เมนู อบรม: ข้อมูลผู้อบรม + ภาคปฏิบัติ 5 ข้อ (ผู้สอนติ๊ก)" onerror="this.closest('figure').classList.add('nopic')"></a><figcaption>เมนู อบรม: ข้อมูลผู้อบรม + ภาคปฏิบัติ 5 ข้อ (ผู้สอนติ๊ก)</figcaption></figure>
+  <figure style="max-width:62%"><a href="manual/08-quiz.png" target="_blank" rel="noopener"><img src="manual/08-quiz.png" width="1800" height="930" alt="แบบทดสอบ: ลำดับข้อและตัวเลือกสุ่มทุกครั้ง" onerror="this.closest('figure').classList.add('nopic')"></a><figcaption>แบบทดสอบ: ลำดับข้อและตัวเลือกสุ่มทุกครั้ง</figcaption></figure>
+  <div class="box rule"><b class="t">ดูว่าใครอบรมแล้ว</b>เมนู อบรม ด้านบนแสดงจำนวนคนที่ผ่านแยก กะ A · B · C และตารางรายชื่อ (กรองตามกะได้ · Export CSV ได้) ข้อมูลเก็บบน server และอยู่ใน Backup</div>
+</section>
+
+<section id="m8">
+  <h2>8. ภาคปฏิบัติ 5 ข้อ (ใช้เป็นเช็กลิสต์ตอนสอน)</h2>
+  <div class="tw"><table class="sign"><tr><th style="width:36px">#</th><th>ผู้อบรมทำได้จริงบนหน้าจอ</th><th style="width:70px">ผ่าน</th></tr>
+    <tr><td>1</td><td>รับงานเข้า: ใส่ข้อมูล → ✦ แนะนำช่อง → วางตามไฮไลต์ → กด ✓ วางแล้ว</td><td></td></tr><tr><td>2</td><td>หางาน: พิมพ์ Job No. ในช่องค้นหา 3D แล้วไปหยิบถูกช่อง</td><td></td></tr><tr><td>3</td><td>หยิบงานออกด้วย Pick List: ติ๊กทีละจุด แล้วกด นำออกที่ติ๊ก</td><td></td></tr><tr><td>4</td><td>ติด Hold (ชื่อ + เหตุผล) และรู้ว่าปลด Hold ต้องมีผู้อนุมัติ</td><td></td></tr><tr><td>5</td><td>รู้วิธีใช้ผังกระดาษเมื่อระบบใช้ไม่ได้</td><td></td></tr></table></div>
+  <h3>ปุ่มที่ใช้บ่อย</h3>
+  <div class="tw"><table><tr><th>ปุ่ม / เมนู</th><th>ใช้ทำอะไร</th></tr>
+    <tr><td>+ รับงานเข้า</td><td>เพิ่มงานเข้า Store</td></tr><tr><td>✦ แนะนำช่อง (Smart)</td><td>ให้ระบบเลือกช่องที่ถูกโซนและใกล้ที่สุด</td></tr>
+    <tr><td>✓ วางแล้ว</td><td>ยืนยันว่าวางถาดแล้ว ไฮไลต์สีเขียวดับ</td></tr><tr><td>ช่องค้นหา 3D</td><td>พิมพ์ Job No. เพื่อหาตำแหน่ง</td></tr>
+    <tr><td>หยิบงานออก / Pick List</td><td>หยิบหลายงานตามทางเดินสั้นที่สุด</td></tr><tr><td>ติด Hold / 🔒 HOLD</td><td>ติดหรือปลด Hold (เมนู Jobs)</td></tr>
+    <tr><td>↶ ย้อน · ↷</td><td>ย้อน / ทำซ้ำ การบันทึกล่าสุด</td></tr><tr><td>คู่มือ (เมนูซ้ายล่าง)</td><td>เปิดคู่มือสั้นและทัวร์แนะนำในแอป</td></tr></table></div>
+</section>
+<p class="foot">คู่มืออบรม Resonance Store · ฉบับเว็บ (เนื้อหาเดียวกับไฟล์ PDF)</p>
+</main>
+<script>
+/* inside the app's อบรม page: hide the top bar and tell the parent page our height, so the manual shows without its own scroll bar */
+if (window.self !== window.top) {
+  document.documentElement.classList.add('embedded');
+  const tell = () => { try { parent.postMessage({ rsManualHeight: document.documentElement.scrollHeight }, location.origin === 'null' ? '*' : location.origin); } catch (e) {} };
+  addEventListener('load', tell); addEventListener('resize', tell); new ResizeObserver(tell).observe(document.body);
+  /* the frame has no scroll bar of its own here, so a contents link asks the app page to scroll */
+  document.querySelectorAll('nav.toc a').forEach(a => a.addEventListener('click', e => {
+    const t = document.querySelector(a.getAttribute('href')); if (!t) return;
+    e.preventDefault();
+    try { parent.postMessage({ rsManualScroll: t.getBoundingClientRect().top + scrollY }, location.origin === 'null' ? '*' : location.origin); } catch (err) {}
+  }));
+}
+</script>
+</body></html>

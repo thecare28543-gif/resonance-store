@@ -14,7 +14,7 @@
     'resHoldV1', 'resHoldLogV1', 'resHoldAuditV1', 'resKaizenV1', 'resCycleV1', 'resOwnerEmailV1', 'resZoneV1', 'resTrainV1'];
   const API = 'api/', POLL_MS = 5000, RETRY_MS = 15000, BOOT_TIMEOUT = 3000;
   /* app version: change it whenever app.js / sync.js change, so a PC on old files shows up */
-  const VER = '2026.11.11';
+  const VER = '2026.11.13';
   const ls = window.localStorage, rawSet = Storage.prototype.setItem, rawRemove = Storage.prototype.removeItem;
   const st = {
     mode: location.protocol === 'file:' ? 'local' : 'connecting',   /* local | connecting | online | saving | offline */

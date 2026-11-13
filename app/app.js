@@ -3614,8 +3614,22 @@ function trainPrint(){
   w.document.close();
 }
 $('trPractical').innerHTML = TRAIN_PRACTICAL.map((t, i) => `<label class="tr-check"><input type="checkbox" data-p="${i}"><span>${esc(t)}</span></label>`).join('');
-/* the manual PDF loads only when someone opens it (1.5 MB) */
-$('trManual').addEventListener('toggle', () => { const f = $('trManualFrame'); if ($('trManual').open && !f.src) f.src = 'training-manual.pdf#view=FitH'; });
+/* the training manual is a web page (manual.html) shown inside the อบรม view; it reports its height so it shows without a second scroll bar */
+const trManualLoad = () => { const f = $('trManualFrame'); if ($('trManual').open && !f.getAttribute('src')) f.src = 'manual.html'; };
+$('trManual').addEventListener('toggle', trManualLoad);
+trManualLoad();
+addEventListener('message', e => {
+  const f = $('trManualFrame'), h = e.data && e.data.rsManualHeight;
+  if (e.source !== f.contentWindow) return;
+  if (Number.isFinite(h) && h > 100) f.style.height = Math.min(Math.ceil(h) + 4, 20000) + 'px';
+  /* contents link inside the manual: scroll the app page (or its scrolling panel) to that heading */
+  const y = e.data && e.data.rsManualScroll;
+  if (Number.isFinite(y)){
+    let box = f.parentElement;
+    while (box && !(box.scrollHeight > box.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(box).overflowY))) box = box.parentElement;
+    (box || document.scrollingElement).scrollBy({ top: f.getBoundingClientRect().top + y - (box ? box.getBoundingClientRect().top : 0) - 90, behavior: 'smooth' });
+  }
+});
 $('trStart').addEventListener('click', trainStart);
 $('trCrewFilter').addEventListener('change', renderTrain);
 $('trExport').addEventListener('click', trainExport);

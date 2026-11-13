@@ -4,7 +4,7 @@ Newest first. One line per release: date · who · what · why.
 
 ## 2026-11-13 · Sirinya Mungjuntuek · release 2026.11.13: training manual as a web page
 - **manual.html:** the training manual (was only a PDF) is now a web page with the same content: contents list, 8 sections, A4 print layout (9 pages, same as the PDF), phone width. The อบรม page shows it inline, sized to its full height (no second scroll bar); contents links scroll the app page. "เปิดเต็มจอ / พิมพ์" opens it alone; the PDF stays as "ดาวน์โหลด PDF". Behind the log-in like every other page.
-- The 8 screenshots live in `app/manual/` and are **not in the repository** (real job numbers, same rule as the PDF); without them each figure shows a note instead.
+- The 8 screenshots live in `app/manual/`. They and `training-manual.pdf` are now in the repository (the lab lead confirmed they are not confidential). If a picture is missing, its figure shows a note instead.
 - **server.js:** `X-Frame-Options` DENY → SAMEORIGIN, so the app can show its own pages in a frame (the old PDF frame was blank on the server for the same reason). Other sites still cannot frame it.
 - **sw.js:** cache v5 with the manual; files are cached one by one, so a missing file (the PDF or pictures on a fresh install) no longer stops the offline copy.
 - VER 2026.11.13. Tests: auth_api 43/43, e2e 24/24, ui_login 14/14, manual page 12/12.

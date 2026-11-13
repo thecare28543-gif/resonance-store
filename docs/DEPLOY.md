@@ -24,7 +24,6 @@ Thai step-by-step for pgAdmin: `app/db/วิธีตั้งค่าฐา�
 4. Copy `server-config.example.json` to `server-config.json`, fill `database.password`. Or set `DATABASE_URL=postgres://rs_app:<pw>@host:5432/resonance_store` instead.
 5. In the app folder: `npm install`, then `deploy\2-install-autostart.bat` (or run `node server.js` as a service with NSSM / pm2).
 6. The server log prints `NO ADMIN YET … setup code: LDV` (also in `data/setup-token.txt`). Open the site, enter the setup code + the admin's GID + name. That admin then logs in with **GID / GID**.
-6b. Copy `training-manual.pdf` and the `manual/` folder (8 screenshots) from the lab's app folder into `app/`. They are not in this public repository because the screenshots show real job numbers. Without them the อบรม page and `manual.html` still work; each picture is replaced by a note.
 7. Put it behind the company reverse proxy (IIS ARR / nginx) with **https**. Keep `secureCookie: "auto"` and let the proxy send `X-Forwarded-Proto: https`.
 8. Moving from the old JSON server: put the old `data/resonance-data.json` in the new `data/` folder before the first start; it is imported once. Or log in as admin → status chip → Backup & Restore → **⬆ กู้คืนจากไฟล์**.
 

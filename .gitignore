@@ -11,10 +11,6 @@ data/
 *.pptx
 *.mp4
 
-# training manual PDF: screenshots contain real lab job numbers; copy it in at deployment
-app/training-manual.pdf
-# the web manual's 8 screenshots (app/manual/*.png) for the same reason: copy the manual/ folder in at deployment
-app/manual/
 
 # Node packages: run "npm install" in app/ after cloning
 node_modules/
